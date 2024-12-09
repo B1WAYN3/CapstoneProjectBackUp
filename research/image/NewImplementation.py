@@ -114,7 +114,7 @@ for i in times2Run:
         cv2.imwrite(os.path.join(path, f"hough_lines_{getTime()}.jpg"), hough_debug_img)
 
     # Lower threshold more to get patches
-    threshold = 20
+    threshold = 12
     print(f"Using threshold={threshold} for lane detection.")
     col_sum = np.sum(mask_edges > 0, axis=0)
     lane_columns = np.where(col_sum > threshold)[0]
