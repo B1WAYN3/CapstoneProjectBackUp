@@ -106,17 +106,43 @@ for i in times2Run:
     if ifblue:
         lower_hsv = np.array([100, 150, 50])
         upper_hsv = np.array([130, 255, 255])
+        mask = cv2.inRange(img_crop_hsv, lower_hsv, upper_hsv)
     else:
-        lower_hsv = np.array([0, 0, 120])
-        upper_hsv = np.array([180, 50, 255])
+        lower_white = np.array([0, 0, 200])
+        upper_white = np.array([180, 30, 255])
 
-    mask = cv2.inRange(img_crop_hsv, lower_hsv, upper_hsv)
+        lower_yellow = np.array([20, 100, 100])
+        upper_yellow = np.array([30, 255, 255])
+        
+        # Create masks for white and yellow lanes
+        mask_white = cv2.inRange(img_crop_hsv, lower_white, upper_white)
+        mask_yellow = cv2.inRange(img_crop_hsv, lower_yellow, upper_yellow)
+        
+        # Combine masks to detect both white and yellow lanes
+        mask = cv2.bitwise_or(mask_white, mask_yellow)
+    
+
+    print('Applying morphological operations to enhance lane lines...')
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
     print('Applying Gaussian blur on mask...')
     mask_blurred = cv2.GaussianBlur(mask, (5, 5), 0)
 
     print('Applying Canny filter...')
     mask_edges = cv2.Canny(mask_blurred, 50, 150)
+
+    print('Applying Region of Interest (ROI)...')
+    mask_roi = np.zeros_like(mask_edges)
+    polygon = np.array([[
+        (0, mask_edges.shape[0]),
+        (SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2),
+        (SCREEN_WIDTH // 2 + 50, SCREEN_HEIGHT // 2),
+        (SCREEN_WIDTH, mask_edges.shape[0])
+    ]], np.int32)
+    cv2.fillPoly(mask_roi, polygon, 255)
+    mask_edges = cv2.bitwise_and(mask_edges, mask_roi)
 
     crop_width = 20
     mask_edges = mask_edges[:, crop_width:]
