@@ -347,24 +347,6 @@ for i in times2Run:
 
         height, width, _ = new_frame.shape
 
-        # Now apply offsets (crop_width, crop_height) when drawing lines and centroids on new_frame
-
-        # Draw right lane line if available
-        if len(X_right) > 1:
-            x1_right_adj = 219 + crop_width
-            y1_right_adj = int(y1_right) + crop_height
-            x2_right_adj = 319 + crop_width
-            y2_right_adj = int(y2_right) + crop_height
-            cv2.line(new_frame, (x1_right_adj, y1_right_adj), (x2_right_adj, y2_right_adj), (0,255,255), 5)
-
-        # Draw left lane line if available
-        if len(X_left) > 1:
-            x1_left_adj = 0 + crop_width
-            y1_left_adj = int(y1_left) + crop_height
-            x2_left_adj = 100 + crop_width
-            y2_left_adj = int(y2_left) + crop_height
-            cv2.line(new_frame, (x1_left_adj, y1_left_adj), (x2_left_adj, y2_left_adj), (255,0,0), 5)
-
         # Draw mid_star line
         if (x_start_right is not None) and (x_start_left is not None):
             mid_star_adj_x = int(mid_star) + crop_width
