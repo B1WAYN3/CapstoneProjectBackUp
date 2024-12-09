@@ -59,7 +59,7 @@ def main():
                         update_steering_angle(60)
                     elif distance <= 325 and (angle in range(230, 315)):
                         print(f"Object is on the right at {distance} mm and {angle} degrees., move left")
-                        update_steering_angle(135)
+                        update_steering_angle(125)
 
                #  if not object_detected_behind:
                #      print("No object detected behind, stopping motor.")
