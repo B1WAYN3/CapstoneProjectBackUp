@@ -154,8 +154,6 @@ for i in times2Run:
         segments.append((start, prev))
         print(f"Final segment appended: ({start}, {prev})")
 
-        print(f"Left segments: {left_segments}")
-        print(f"Right segments: {right_segments}")
         num_patches_horizontal = 6
         num_patches_vertical = 4 
         patch_height = (SCREEN_HEIGHT - crop_height) // num_patches_vertical
