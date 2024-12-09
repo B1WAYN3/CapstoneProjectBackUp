@@ -68,6 +68,7 @@ for i in times2Run:
         # Capture a live image from the camera
         camera.read()  # Discard the first frame
         successfulRead, raw_image = camera.read()
+        print("Live Image Taken.")
         if not successfulRead:
             print("Image not taken successfully.")
             break
@@ -81,6 +82,7 @@ for i in times2Run:
         if raw_image is None:
             print("Failed to load image from file.")
             break
+        print("Imported Image for Testing, no live data.")
 
     cv2.imwrite(os.path.join(path, f"raw_image_{getTime()}.jpg"), raw_image)
 
