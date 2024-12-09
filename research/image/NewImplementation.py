@@ -113,10 +113,12 @@ for i in times2Run:
         cv2.imwrite(os.path.join(path, f"hough_lines_{getTime()}.jpg"), hough_debug_img)
 
     # Lower threshold more to get patches
-    threshold = 10
+    threshold = 20
     print(f"Using threshold={threshold} for lane detection.")
     col_sum = np.sum(mask_edges > 0, axis=0)
     lane_columns = np.where(col_sum > threshold)[0]
+    left_segments = []
+    right_segments = []
     print(f"lane_columns: {lane_columns}")
 
     if len(lane_columns) == 0:
@@ -125,6 +127,7 @@ for i in times2Run:
         segments = []
         start = lane_columns[0]
         prev = lane_columns[0]
+        image_center = adjusted_screen_width // 2
         print(f"Start: {start}, Prev: {prev}")
 
         for c in lane_columns[1:]:
@@ -138,11 +141,23 @@ for i in times2Run:
         segments.append((start, prev))
         print(f"Final segment appended: ({start}, {prev})")
 
+        
+        for (seg_start, seg_end) in segments:
+            col_center = (seg_start + seg_end) // 2
+            if col_center < image_center:
+                left_segments.append((seg_start, seg_end))
+            else:
+                right_segments.append((seg_start, seg_end))
+
+        print(f"Left segments: {left_segments}")
+        print(f"Right segments: {right_segments}")
         num_patches_vertical = 4
         patch_height = (SCREEN_HEIGHT - crop_height) // num_patches_vertical
         print(f'Pathc Height: {patch_height}')
         patch_width = 20
         list_patch = []
+        
+
 
         print("Patches (in mask_edges coords):")
         for (seg_start, seg_end) in segments:
@@ -215,8 +230,14 @@ for i in times2Run:
         n_left_side_right_dir = 0
         n_left_side_left_dir = 0
 
-        image_center = adjusted_screen_width // 2
+        
         print(f"Using image_center={image_center} to divide left/right lanes.")
+        cv2.line(hough_debug_img, (image_center + crop_width, 0),
+         (image_center + crop_width, hough_debug_img.shape[0]),
+         (0, 255, 0), 2)
+        
+        cv2.imwrite(os.path.join(path, f"hough_image_center_line{getTime()}.jpg"), hough_debug_img)
+
 
         print("Separating centroids into left and right sets for polynomial interpolation...")
 
