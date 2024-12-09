@@ -162,6 +162,9 @@ for i in times2Run:
         cv2.imwrite(os.path.join(path, f"hough_lines_{getTime()}.jpg"), hough_debug_img)
 
     # Lower threshold more to get patches
+    # Existing Code Above...
+
+    # Lower threshold more to get patches
     threshold = 12
     print(f"Using threshold={threshold} for lane detection.")
     col_sum = np.sum(mask_edges > 0, axis=0)
@@ -245,8 +248,8 @@ for i in times2Run:
                     inside_points.append([lx1, ly1])
                     inside_points.append([lx2, ly2])
                     # Optionally, visualize these points
-                    # cv2.circle(centroid_debug_image, (lx1 + crop_width, ly1), 2, (255,0,0), -1)
-                    # cv2.circle(centroid_debug_image, (lx2 + crop_width, ly2), 2, (255,0,0), -1)
+                    cv2.circle(centroid_debug_image, (lx1 + crop_width, ly1), 2, (255,0,0), -1)
+                    cv2.circle(centroid_debug_image, (lx2 + crop_width, ly2), 2, (255,0,0), -1)
 
             if len(inside_points) > 0:
                 inside_points = np.array(inside_points)
