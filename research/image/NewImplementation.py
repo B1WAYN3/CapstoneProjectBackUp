@@ -14,11 +14,12 @@ past_steering_angle = 0
 row_threshold = 0
 path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
 image_import_path = "/home/pi/CapstoneProjectBackUp/research/image/Data/raw_imports"
-crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 120 pixels
+crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 48 pixels
 ifblue = False
 use_live_camera = True  # Set this to False to load image from file
-image_center = 0 
+image_center = SCREEN_WIDTH // 2  # Initialize image_center based on SCREEN_WIDTH
 
+# Initialize camera
 camera = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT)
@@ -41,25 +42,16 @@ def stabilize_steering_angle(curr_steering_angle, last_steering_angle=None, alph
             return np.clip(int(alpha * curr_steering_angle + (1.-alpha) * last_steering_angle),
                            last_steering_angle-3, last_steering_angle+3)
 
-# For reference, we have arrays: X_left and X_right
-# They contain the (x,y) coordinates of lane points on each side.
-# Let's define a function to estimate mid_star from one lane using a fixed lane width assumption.
+# Function to estimate mid_star from one lane using a fixed lane width assumption
 def estimate_mid_star_from_one_lane(lane_points, lane_side='right', lane_width=60):
-    # lane_points is either X_left or X_right
-    # We'll pick a reference point from these lane points. A good choice might be the average x-position.
     if len(lane_points) > 0:
         avg_x = np.mean(lane_points[:, 0])
-        # If we only have the right lane, assume center is lane_width/2 to the left
-        # If we only have the left lane, assume center is lane_width/2 to the right
         if lane_side == 'right':
             return avg_x - (lane_width / 2.0)
         else:
             return avg_x + (lane_width / 2.0)
     else:
-        # If somehow lane_points is empty, fallback to a default
         return 159
-    
-
 
 times2Run = {1}
 
@@ -102,15 +94,17 @@ for i in times2Run:
     img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_BGR2HSV)
     img_crop_hsv = img_hsv
 
-    print('Creating binary mask...')
+    print('Creating binary masks for white and yellow lanes...')
     if ifblue:
+        # Existing blue lane detection
         lower_hsv = np.array([100, 150, 50])
         upper_hsv = np.array([130, 255, 255])
         mask = cv2.inRange(img_crop_hsv, lower_hsv, upper_hsv)
     else:
+        # Define HSV ranges for white and yellow lanes
         lower_white = np.array([0, 0, 200])
         upper_white = np.array([180, 30, 255])
-
+        
         lower_yellow = np.array([20, 100, 100])
         upper_yellow = np.array([30, 255, 255])
         
@@ -135,6 +129,7 @@ for i in times2Run:
 
     print('Applying Region of Interest (ROI)...')
     mask_roi = np.zeros_like(mask_edges)
+
     # Define separate polygons for left and right lanes
     left_polygon = np.array([[
         (0, mask_edges.shape[0]),                                  # Bottom-left corner
@@ -164,9 +159,10 @@ for i in times2Run:
 
     cv2.imwrite(os.path.join(path, f"cropped_mask_edges_{getTime()}.jpg"), mask_edges)
 
-    minLineLength = 12
-    maxLineGap = 3
-    min_threshold = 5
+    # Update Hough Transform parameters
+    minLineLength = 60  # Increased from 40 to further filter out shorter lines like street signs
+    maxLineGap = 25     # Slightly increased from 20 to maintain continuity
+    min_threshold = 50  # Increased from 50 to require more votes for line detection
 
     print('Applying Probabilistic Hough Transform...')
     lines = cv2.HoughLinesP(mask_edges, 1, np.pi/180, min_threshold, minLineLength, maxLineGap)
@@ -174,10 +170,24 @@ for i in times2Run:
     if lines is not None:
         hough_debug_img = cv2.cvtColor(mask_edges, cv2.COLOR_GRAY2BGR)
         print("Detected lines (in mask_edges coords):")
+        # Initialize lists to hold filtered lines
+        filtered_lines = []
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            # print(f"Line: ({x1},{y1}) -> ({x2},{y2})")
-            cv2.line(hough_debug_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            # Calculate the angle of the line relative to the vertical axis
+            angle = math.degrees(math.atan2((x2 - x1), (y2 - y1)))
+            # Filter lines based on angle (e.g., only near vertical)
+            if -25 < angle < 25:
+                filtered_lines.append(line)
+                cv2.line(hough_debug_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                #print(f"Accepted Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
+            else:
+                #print(f"Rejected Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
+
+        print(f"Total detected lines: {len(lines)}, Filtered lines: {len(filtered_lines)}")
+    else:
+        hough_debug_img = None
+        print("No lines detected.")
 
     print("Saving Images without calculating angle.")
     cv2.imwrite(os.path.join(path, f"img_rgb_{getTime()}.jpg"), img_rgb)
@@ -242,7 +252,8 @@ for i in times2Run:
             print(f"Patch {idx}: x0={x0}, x1={x1}, y0={y0}, y1={y1}")
             print(f'Rectangle First Coordinate: {(x0 + crop_width, y0)}, Second: {(x1 + crop_width, y1)}')
             cv2.rectangle(img_bottom_half_bgr, (x0 + crop_width, y0), (x1 + crop_width, y1), (50,255, 0), 1)
-            cv2.rectangle(hough_debug_img, (x0 + crop_width, y0), (x1 + crop_width, y1), (50,255, 0), 1)
+            if hough_debug_img is not None:
+                cv2.rectangle(hough_debug_img, (x0 + crop_width, y0), (x1 + crop_width, y1), (50,255, 0), 1)
     else:
         print("lines is NONE")
 
@@ -264,22 +275,23 @@ for i in times2Run:
             py_start, py_end = patch_info['y']
 
             inside_points = []
-            for detected_line in lines:
+            for detected_line in filtered_lines:
                 lx1, ly1, lx2, ly2 = detected_line[0]
-                #print(f"Checking line ({lx1},{ly1})-({lx2},{ly2}) against patch x=({px_start},{px_end}), y=({py_start},{py_end})")
-
-                if (lx1 >= px_start and lx1 <= px_end and ly1 >= py_start and ly1 <= py_end and
-                    lx2 >= px_start and lx2 <= px_end and ly2 >= py_start and ly2 <= py_end):
+                # Check if both endpoints are within the patch
+                if (px_start <= lx1 <= px_end and py_start <= ly1 <= py_end and
+                    px_start <= lx2 <= px_end and py_start <= ly2 <= py_end):
                     inside_points.append([lx1, ly1])
                     inside_points.append([lx2, ly2])
-                    #print(f"Line endpoints inside patch: Start ({lx1}, {ly1}), End ({lx2}, {ly2})")  # Debug line endpoints
+                    # Optionally, visualize these points
+                    cv2.circle(centroid_debug_image, (lx1 + crop_width, ly1), 2, (255,0,0), -1)
+                    cv2.circle(centroid_debug_image, (lx2 + crop_width, ly2), 2, (255,0,0), -1)
 
             if len(inside_points) > 0:
                 inside_points = np.array(inside_points)
                 centroid_coords = np.mean(inside_points, axis=0).astype(int)
                 print(f'Centroid_Coords: {centroid_coords}')
                 patch_centroids_data.append({'patch': patch_info, 'centroid': (centroid_coords[0], centroid_coords[1])})
-                cv2.circle(centroid_debug_image, (centroid_coords[0] + crop_width, centroid_coords[1]), 3, (0,165,255), -1)
+                cv2.circle(centroid_debug_image, (centroid_coords[0] + crop_width, centroid_coords[1]), 5, (0,165,255), -1)
                 print(f"Centroid: ({centroid_coords[0]},{centroid_coords[1]})")
 
         cv2.imwrite(os.path.join(path, f"centroids_visualized_{getTime()}.jpg"), centroid_debug_image)
@@ -287,12 +299,8 @@ for i in times2Run:
 
         X_left = []
         X_right = []
-        n_right_side_right_dir = 0
-        n_right_side_left_dir = 0
-        n_left_side_right_dir = 0
-        n_left_side_left_dir = 0
+        # Removed unused variables: n_right_side_right_dir, etc.
 
-        
         print(f"Using image_center={image_center} to divide left/right lanes.")
         cv2.line(hough_debug_img, (image_center + crop_width, 0),
          (image_center + crop_width, hough_debug_img.shape[0]),
@@ -326,31 +334,41 @@ for i in times2Run:
 
         x_start_right = None
         x_start_left = None
-        
+
 
         # Process left lane points
-        if len(X_left) > 0:
-            ransac = RANSACRegressor()
-            X_left = np.array(X_left)
-            ransac.fit(X_left[:, 0].reshape(-1, 1), X_left[:, 1])
-            line_X = np.arange(X_left[:, 0].min(), X_left[:, 0].max()).reshape(-1, 1)
-            line_y_ransac = ransac.predict(line_X)
-            cv2.polylines(poly_debug_img, [np.int32(list(zip(line_X.flatten(), line_y_ransac.flatten())))], False, (255, 0, 0), 2)
-            print(f"RANSAC Left Lane: X range {line_X.flatten()[0]} to {line_X.flatten()[-1]}, Y range {line_y_ransac[0]} to {line_y_ransac[-1]}")
+        if len(X_left) >= 2:
+            try:
+                ransac_left = RANSACRegressor()
+                ransac_left.fit(X_left[:, 0].reshape(-1, 1), X_left[:, 1])
+                line_X_left = np.linspace(X_left[:, 0].min(), X_left[:, 0].max(), 100).reshape(-1, 1)
+                line_y_ransac_left = ransac_left.predict(line_X_left)
+                cv2.polylines(poly_debug_img, [np.int32(list(zip(line_X_left.flatten(), line_y_ransac_left.flatten())))], False, (255, 0, 0), 2)
+                print(f"RANSAC Left Lane: X range {line_X_left.flatten()[0]} to {line_X_left.flatten()[-1]}, Y range {line_y_ransac_left[0]} to {line_y_ransac_left[-1]}")
+                x_start_left = line_X_left.flatten()[0]
+            except Exception as e:
+                print(f"RANSAC fitting failed for left lane: {e}")
+                x_start_left = None
         else:
-            print("No valid points found for left lane detection.")
+            print("Not enough points for RANSAC left lane detection.")
+            x_start_left = None
 
         # Process right lane points
-        if len(X_right) > 0:
-            ransac = RANSACRegressor()
-            X_right = np.array(X_right)
-            ransac.fit(X_right[:, 0].reshape(-1, 1), X_right[:, 1])
-            line_X = np.arange(X_right[:, 0].min(), X_right[:, 0].max()).reshape(-1, 1)
-            line_y_ransac = ransac.predict(line_X)
-            cv2.polylines(poly_debug_img, [np.int32(list(zip(line_X.flatten(), line_y_ransac.flatten())))], False, (0, 255, 255), 2)
-            print(f"RANSAC Right Lane: X range {line_X.flatten()[0]} to {line_X.flatten()[-1]}, Y range {line_y_ransac[0]} to {line_y_ransac[-1]}")
+        if len(X_right) >= 2:
+            try:
+                ransac_right = RANSACRegressor()
+                ransac_right.fit(X_right[:, 0].reshape(-1, 1), X_right[:, 1])
+                line_X_right = np.linspace(X_right[:, 0].min(), X_right[:, 0].max(), 100).reshape(-1, 1)
+                line_y_ransac_right = ransac_right.predict(line_X_right)
+                cv2.polylines(poly_debug_img, [np.int32(list(zip(line_X_right.flatten(), line_y_ransac_right.flatten())))], False, (0, 255, 255), 2)
+                print(f"RANSAC Right Lane: X range {line_X_right.flatten()[0]} to {line_X_right.flatten()[-1]}, Y range {line_y_ransac_right[0]} to {line_y_ransac_right[-1]}")
+                x_start_right = line_X_right.flatten()[-1]
+            except Exception as e:
+                print(f"RANSAC fitting failed for right lane: {e}")
+                x_start_right = None
         else:
-            print("No valid points found for right lane detection.")
+            print("Not enough points for RANSAC right lane detection.")
+            x_start_right = None
 
         cv2.imwrite(os.path.join(path, f"polynomial_lines_{getTime()}.jpg"), poly_debug_img)
         print("Polynomial lines computed and visualized.")
@@ -361,13 +379,11 @@ for i in times2Run:
             mid_star = 0.5 * (x_start_right + x_start_left)
             print(f"Both lanes detected. mid_star: {mid_star}")
         elif (x_start_right is not None) and (x_start_left is None):
-            # No defined right_lane array, let's use X_right data
-            # Estimate mid_star from right lane data alone
+            # Only right lane detected
             mid_star = estimate_mid_star_from_one_lane(X_right, lane_side='right')
             print(f"Only right lane detected. Estimated mid_star: {mid_star}")
         elif (x_start_right is None) and (x_start_left is not None):
-            # No defined left_lane array, let's use X_left data
-            # Estimate mid_star from left lane data alone
+            # Only left lane detected
             mid_star = estimate_mid_star_from_one_lane(X_left, lane_side='left')
             print(f"Only left lane detected. Estimated mid_star: {mid_star}")
         else:
@@ -375,7 +391,7 @@ for i in times2Run:
             print("No lanes detected. Using default mid_star: 159")
 
         print('Computing servo angle from mid_star offset...')
-        dx = mid_star - 160
+        dx = mid_star - 160  # Offset from center (160)
         servo_angle = 90 - (dx * (90/160.0))
         servo_angle = np.clip(servo_angle, 0, 180)
         print(f"Calculated servo angle: {servo_angle}")
@@ -390,7 +406,7 @@ for i in times2Run:
         text = str(servo_angle)
         cv2.putText(poly_debug_img, text, (130, 50), font, 1, (0, 0, 255), 2)
 
-        # Previous code...
+        # Concatenate top and bottom images
         top_section = raw_image[:crop_height,:]
         top_h, top_w, _ = top_section.shape
         poly_h, poly_w, _ = poly_debug_img.shape
