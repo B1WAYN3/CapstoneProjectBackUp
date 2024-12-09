@@ -286,7 +286,7 @@ for i in times2Run:
             print(f"Left side has {X_left.shape[0]} points, applying polyfit...")
             left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1, w=X_left[:,1])
             print(f"Polynomial coefficients (slope, intercept) for left lane: {left_lane}")
-            x_min, x_max = np.min(X_right[:,0]), np.max(X_right[:,0])
+            x_min, x_max = np.min(X_left[:,0]), np.max(X_left[:,0])
             y1_right = right_lane[0] * x_min + right_lane[1]
             y2_right = right_lane[0] * x_max + right_lane[1]
             x1_right, y1r = int(x_min), int(y1_right)
