@@ -7,7 +7,6 @@ from board import SCL, SDA
 from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
 from adafruit_rplidar import RPLidar
-import trialmotor as momo
 
 def Servo_Motor_Initialization():
     i2c_bus = busio.I2C(SCL, SDA)
@@ -34,8 +33,8 @@ def scale_lidar_distance(distance, max_distance=3000):
 
 def main():
     update_steering_angle(90)  # Start with neutral steering angle
-    Motor_Speed(pca, 0.24)  # Start with motor off
-    object_detected_behind = False  # Flag to detect objects behind the vehicle
+    Motor_Speed(pca, 0.3)  # Start with motor off
+    # object_detected_behind = False  # Flag to detect objects behind the vehicle
 
     try:
         while True:
