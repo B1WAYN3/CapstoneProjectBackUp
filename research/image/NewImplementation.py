@@ -14,6 +14,7 @@ row_threshold = 0
 path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 120 pixels
 ifblue = False
+image_center = 0 
 
 camera = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
