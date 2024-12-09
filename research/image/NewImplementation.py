@@ -185,8 +185,8 @@ for i in times2Run:
         print("lines is NONE")
 
     print("Saving Image With Lines (Dynamic Patches).")
-    cv2.imwrite(os.path.join(path, f"image_lines_bottom_half_raw{getTime()}.jpg"), img_bottom_half_bgr)
     if lines is not None:
+        cv2.imwrite(os.path.join(path, f"image_lines_bottom_half_raw{getTime()}.jpg"), img_bottom_half_bgr)
         cv2.imwrite(os.path.join(path, f"image_lines_masked_edges{getTime()}.jpg"), hough_debug_img)
 
     if lines is None:
@@ -271,8 +271,13 @@ for i in times2Run:
             print(f"Polynomial coefficients (slope, intercept) for right lane: {right_lane}")
             y1_right = right_lane[0] * 219 + right_lane[1]
             y2_right = right_lane[0] * 319 + right_lane[1]
+            x1_right, y1r = 219, int(y1_right)
+            x2_right, y2r = 319, int(y2_right)
             print(f"Calculated y1: {y1_right}, y2: {y2_right} for x=219 and x=319")
             x_start_right = int((25 - right_lane[1])/(right_lane[0]+0.001))
+            x2_right, y2r = 319, int(y2_right)
+            cv2.line(poly_debug_img, (x1_right + crop_width, y1r + crop_height), 
+                    (x2_right + crop_width, y2r + crop_height), (0, 255, 255), 2)
         else:
             print("Not enough points on the right side for polyfit.")
 
@@ -282,8 +287,12 @@ for i in times2Run:
             print(f"Polynomial coefficients (slope, intercept) for left lane: {left_lane}")
             y1_left = left_lane[0] * 0 + left_lane[1]
             y2_left = left_lane[0] * 100 + left_lane[1]
+            x1_left, y1l = 0, int(y1_left)
+            x2_left, y2l = 100, int(y2_left)
             print(f"Calculated y1: {y1_left}, y2: {y2_left} for x=0 and x=100")
             x_start_left = int((25 - left_lane[1])/(left_lane[0]+0.001))
+            cv2.line(poly_debug_img, (x1_left + crop_width, y1l + crop_height), 
+             (x2_left + crop_width, y2l + crop_height), (255, 0, 0), 2)
         else:
             print("Not enough points on the left side for polyfit.")
 
