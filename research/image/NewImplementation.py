@@ -335,11 +335,6 @@ for i in times2Run:
 
         print('Computing servo angle from mid_star offset...')
 
-        # Linear mapping from horizontal offset to servo angle
-        dx = mid_star - 160  # Offset from center (160)
-        # dx=0    => servo=90 (straight)
-        # dx=+160 => servo=0 (full right)
-        # dx=-160 => servo=180 (full left)
         servo_angle = 90 - (dx * (90/160.0))
         servo_angle = np.clip(servo_angle, 0, 180)
         print(f"Calculated servo angle: {servo_angle}")
@@ -352,7 +347,7 @@ for i in times2Run:
         cv2.putText(poly_debug_img, text, (110, 30 ), font, 1, (0, 0, 255), 2)
         print("Steering angle text written on image.")
         text = str(servo_angle)
-        cv2.putText(poly_debug_img, text, (120, 40), font, 1, (0, 0, 255), 2)
+        cv2.putText(poly_debug_img, text, (130, 50), font, 1, (0, 0, 255), 2)
 
         top_section = raw_image[:crop_height,:]
         top_h, top_w, _ = top_section.shape
@@ -368,12 +363,21 @@ for i in times2Run:
 
         height, width, _ = new_frame.shape
 
-        # Draw the magenta line representing the steering direction
-        mid_star_adj_x = int(mid_star) + crop_width
-        y_start = 25 + crop_height
-        y_end = 100 + crop_height
-        cv2.line(new_frame, (int(np.clip(mid_star_adj_x, -10000, 10000)), y_start), 
-                (160+crop_width, y_end), (255,0,255), 5)
+        # Define the bottom center of the image as the pivot point for drawing the line
+        center_x = width // 2
+        center_y = height - 50  # 50 pixels from bottom, adjust as desired
+        line_length = 100       # length of the line representing steering direction
+
+        # Convert servo_angle to radians and rotate line so that:
+        # servo_angle=90 => line straight up
+        # servo_angle=0 => line to the right
+        # servo_angle=180 => line to the left
+        theta = np.deg2rad(90 - servo_angle)
+
+        # Compute end coordinates of the line based on angle
+        end_x = int(center_x + line_length * np.sin(theta))
+        end_y = int(center_y - line_length * np.cos(theta))
+        cv2.line(new_frame, (center_x, center_y), (end_x, end_y), (255,0,255), 5)
         print("Drew steering line on new_frame.")
 
         # Overlay centroids onto new_frame (add offsets)
