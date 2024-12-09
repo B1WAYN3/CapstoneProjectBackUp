@@ -12,6 +12,7 @@ SCREEN_HEIGHT = 480
 past_steering_angle = 0
 row_threshold = 0
 path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
+image_import_path = path = "/home/pi/CapstoneProjectBackUp/research/image/Data/raw_imports"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 120 pixels
 ifblue = False
 use_live_camera = False  # Set this to False to load image from file
@@ -265,38 +266,37 @@ for i in times2Run:
         x_start_left = None
         
 
-        if len(X_right) > 1:
-            print(f"Right side has {X_right.shape[0]} points, applying polyfit...")
-            right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1, w=X_right[:,1])
-            print(f"Polynomial coefficients (slope, intercept) for right lane: {right_lane}")
-            x_min, x_max = np.min(X_right[:,0]), np.max(X_right[:,0])
-            y1_right = right_lane[0] * x_min + right_lane[1]
-            y2_right = right_lane[0] * x_max + right_lane[1]
-            x1_right, y1r = int(x_min), int(y1_right)
-            x2_right, y2r = int(x_max), int(y2_right)
-            print(f"Calculated y1: {y1_right}, y2: {y2_right} for x=219 and x=319")
-            x_start_right = int((25 - right_lane[1])/(right_lane[0]+0.001))
-            x2_right, y2r = 319, int(y2_right)
-            cv2.line(poly_debug_img, (x1_right + crop_width, y1r + crop_height), 
-                    (x2_right + crop_width, y2r + crop_height), (0, 255, 255), 2)
-        else:
-            print("Not enough points on the right side for polyfit.")
-
         if len(X_left) > 1:
-            print(f"Left side has {X_left.shape[0]} points, applying polyfit...")
-            left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1, w=X_left[:,1])
-            print(f"Polynomial coefficients (slope, intercept) for left lane: {left_lane}")
-            x_min, x_max = np.min(X_left[:,0]), np.max(X_left[:,0])
-            y1_left = left_lane[0] * x_min + left_lane[1]
-            y2_left = left_lane[0] * x_max + left_lane[1]
-            x1_left, y1l = int(x_min), int(y1_left)
-            x2_left, y2l = int(x_max), int(y2_left)
-            print(f"Calculated y1: {y1_left}, y2: {y2_left} for x=0 and x=100")
-            x_start_left = int((25 - left_lane[1])/(left_lane[0]+0.001))
-            cv2.line(poly_debug_img, (x1_left + crop_width, y1l + crop_height), 
-             (x2_left + crop_width, y2l + crop_height), (255, 0, 0), 2)
+            # Calculate polynomial fit for the left lane
+            left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1)
+            # Define the range for the x-coordinates
+            x_min_left = int(min(X_left[:,0]))
+            x_max_left = int(max(X_left[:,0]))
+            # Calculate the y-coordinates for the line endpoints using the polynomial
+            y_min_left = int(left_lane[0] * x_min_left + left_lane[1])
+            y_max_left = int(left_lane[0] * x_max_left + left_lane[1])
+            # Draw the left lane line
+            cv2.line(poly_debug_img, (x_min_left + crop_width, y_min_left + crop_height), 
+                    (x_max_left + crop_width, y_max_left + crop_height), (255, 0, 0), 2)  # Blue line
+            print(f"Left Lane Line: from ({x_min_left}, {y_min_left}) to ({x_max_left}, {y_max_left})")
+        else: 
+            print("Not Enouch Centorids, or no centorids calculated")
+
+        if len(X_right) > 1:
+            # Calculate polynomial fit for the right lane
+            right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1)
+            # Define the range for the x-coordinates
+            x_min_right = int(min(X_right[:,0]))
+            x_max_right = int(max(X_right[:,0]))
+            # Calculate the y-coordinates for the line endpoints using the polynomial
+            y_min_right = int(right_lane[0] * x_min_right + right_lane[1])
+            y_max_right = int(right_lane[0] * x_max_right + right_lane[1])
+            # Draw the right lane line
+            cv2.line(poly_debug_img, (x_min_right + crop_width, y_min_right + crop_height), 
+                    (x_max_right + crop_width, y_max_right + crop_height), (0, 255, 0), 2)  # Yellow line
+            print(f"Right Lane Line: from ({x_min_right}, {y_min_right}) to ({x_max_right}, {y_max_right})")
         else:
-            print("Not enough points on the left side for polyfit.")
+            print("Not Enouch Centorids, or no centorids calculated")
 
         cv2.imwrite(os.path.join(path, f"polynomial_lines_{getTime()}.jpg"), poly_debug_img)
         print("Polynomial lines computed and visualized.")
