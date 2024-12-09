@@ -1,0 +1,4 @@
+Servo Range and Straight Angle:
+Minimum Angle (Left): 0
+Maximum Angle (Right): 180
+Straight Angle: 100
