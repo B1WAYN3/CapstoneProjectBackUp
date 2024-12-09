@@ -1,5 +1,4 @@
 import math
-import os
 import time
 import busio
 from math import cos, sin, pi
@@ -21,12 +20,12 @@ def Motor_Speed(pca, percent):
 
 # Initialization
 pca = Servo_Motor_Initialization()
-servo_steering = servo.Servo(pca.channels[14]) 
+servo = servo.Servo(pca.channels[14]) 
 PORT_NAME = '/dev/ttyUSB0'
 lidar = RPLidar(None, PORT_NAME, timeout=3)
 
 def update_steering_angle(angle):
-    servo_steering.angle = angle
+    servo.angle = angle
 
 def scale_lidar_distance(distance, max_distance=3000):
     return min(distance, max_distance) / max_distance
@@ -42,22 +41,22 @@ def main():
             for scan in lidar.iter_scans():
                 for (_, angle, distance) in scan:
                     angle = int(angle)
-                  #   print(f"D: {distance} mm, A: {angle} degrees")
+                    # print(f"Distance: {distance} mm, Angle: {angle} degrees")
 
                     # Detect objects around the vehicle
                     if distance <= 350 and (angle in range(315, 360) or angle in range(0, 45)):
                         print(f"Object detected behind at {distance} mm and {angle} degrees.")
                         # Motor_Speed(pca, 0.25)
                         # object_detected_behind = True  # Set flag when object is detected
-                    elif distance <= 800 and (angle in range(165, 200)):
+                    elif distance <= 800 and (angle in range(165, 205)):
                         print(f"Object is in front of us at {distance} mm and {angle} degrees. slowing down")
                         Motor_Speed(pca, -1)
                         time.sleep(2)
                         # Motor_Speed(pca,0)
-                    elif distance <= 325 and (angle in range(45, 180)):
+                    elif distance <= 400 and (angle in range(45, 180)):
                         print(f"Object is on the left at {distance} mm and {angle} degrees., move right")
                         update_steering_angle(60)
-                    elif distance <= 325 and (angle in range(230, 315)):
+                    elif distance <= 400 and (angle in range(230, 315)):
                         print(f"Object is on the right at {distance} mm and {angle} degrees., move left")
                         update_steering_angle(125)
 
