@@ -52,7 +52,7 @@ for i in times2Run:
             break
     else:
         # Load image from file instead of capturing from camera
-        image_file = os.path.join(path, "raw_image_S_02_M_53.jpg")
+        image_file = os.path.join(image_import_path, "raw_image_S_02_M_53.jpg")
         if not os.path.exists(image_file):
             print(f"Image file {image_file} does not exist.")
             break
