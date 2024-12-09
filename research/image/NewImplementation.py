@@ -14,6 +14,7 @@ row_threshold = 0
 path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 120 pixels
 ifblue = False
+use_live_camera = False  # Set this to False to load image from file
 image_center = 0 
 
 camera = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
@@ -41,11 +42,23 @@ def stabilize_steering_angle(curr_steering_angle, last_steering_angle=None, alph
 times2Run = {1}
 
 for i in times2Run:
-    camera.read()  # Discard the first frame
-    successfulRead, raw_image = camera.read()
-    if not successfulRead:
-        print("Image not taken successful.")
-        break
+    if use_live_camera:
+        # Capture a live image from the camera
+        camera.read()  # Discard the first frame
+        successfulRead, raw_image = camera.read()
+        if not successfulRead:
+            print("Image not taken successfully.")
+            break
+    else:
+        # Load image from file instead of capturing from camera
+        image_file = os.path.join(path, "raw_image_S_02_M_53.jpg")
+        if not os.path.exists(image_file):
+            print(f"Image file {image_file} does not exist.")
+            break
+        raw_image = cv2.imread(image_file)
+        if raw_image is None:
+            print("Failed to load image from file.")
+            break
 
     cv2.imwrite(os.path.join(path, f"raw_image_{getTime()}.jpg"), raw_image)
 
@@ -118,8 +131,6 @@ for i in times2Run:
     print(f"Using threshold={threshold} for lane detection.")
     col_sum = np.sum(mask_edges > 0, axis=0)
     lane_columns = np.where(col_sum > threshold)[0]
-    left_segments = []
-    right_segments = []
     print(f"lane_columns: {lane_columns}")
 
     if len(lane_columns) == 0:
@@ -139,36 +150,25 @@ for i in times2Run:
                 start = c
                 print(f"New start set to: {start}")  # Debug the new start
             prev = c
+
         segments.append((start, prev))
         print(f"Final segment appended: ({start}, {prev})")
 
-        
-        for (seg_start, seg_end) in segments:
-            col_center = (seg_start + seg_end) // 2
-            if col_center < image_center:
-                left_segments.append((seg_start, seg_end))
-            else:
-                right_segments.append((seg_start, seg_end))
-
         print(f"Left segments: {left_segments}")
         print(f"Right segments: {right_segments}")
-        num_patches_vertical = 4
+        num_patches_horizontal = 6
+        num_patches_vertical = 4 
         patch_height = (SCREEN_HEIGHT - crop_height) // num_patches_vertical
-        print(f'Pathc Height: {patch_height}')
-        patch_width = 20
+        print(f'Patch Height: {patch_height}')
+        patch_width = adjusted_screen_width // num_patches_horizontal
         list_patch = []
         
-
-
-        print("Patches (in mask_edges coords):")
-        for (seg_start, seg_end) in segments:
-            col_center = (seg_start + seg_end) // 2
-            x0 = max(col_center - patch_width//2, 0)
-            x1 = min(col_center + patch_width//2, adjusted_screen_width - 1)
-            print(f'Col_center: {col_center}, x0: {x0}, x1: {x1}')
+        for i in range(num_patches_horizontal):
+            x0 = i * patch_width
+            x1 = min((i + 1) * patch_width, adjusted_screen_width - 1)
             for k in range(num_patches_vertical):
                 y0 = k * patch_height
-                y1 = (k+1) * patch_height - 1
+                y1 = (k + 1) * patch_height - 1
                 list_patch.append({'x': (x0, x1), 'y': (y0, y1)})
                 print(f"Patch: x=({x0},{x1}), y=({y0},{y1})")
 
@@ -245,7 +245,7 @@ for i in times2Run:
         numTimes = 0 
 
         for data_item in patch_centroids_data:
-            numTimes
+            numTimes += 1
             print(f'Number of times Separating Centroids Ran: {numTimes}')
             cx, cy = data_item['centroid']
             print(f"Centroid found at x={cx}, y={cy}")
