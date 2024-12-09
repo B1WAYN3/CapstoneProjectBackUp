@@ -11,7 +11,7 @@ SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
 past_steering_angle = 0
 row_threshold = 0
-path = "/home/pi/repo/Capstone-Dallas-Edgar/research/ESEColorDetection/PatchData"
+path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 120 pixels
 ifblue = False
 
