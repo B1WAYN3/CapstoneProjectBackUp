@@ -5,7 +5,6 @@ import datetime
 import math
 import sys
 import os
-import RANSACRegressor
 from sklearn.linear_model import RANSACRegressor
 
 # Constants
