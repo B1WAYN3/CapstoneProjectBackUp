@@ -267,34 +267,27 @@ for i in times2Run:
         
 
         if len(X_left) > 1:
-            # Calculate polynomial fit for the left lane
-            left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1)
-            # Define the range for the x-coordinates
-            x_min_left = int(min(X_left[:,0]))
-            x_max_left = int(max(X_left[:,0]))
-            # Calculate the y-coordinates for the line endpoints using the polynomial
-            y_min_left = int(left_lane[0] * x_min_left + left_lane[1])
-            y_max_left = int(left_lane[0] * x_max_left + left_lane[1])
-            # Draw the left lane line
-            cv2.line(poly_debug_img, (x_min_left + crop_width, y_min_left + crop_height), 
-                    (x_max_left + crop_width, y_max_left + crop_height), (255, 0, 0), 2)  # Blue line
-            print(f"Left Lane Line: from ({x_min_left}, {y_min_left}) to ({x_max_left}, {y_max_left})")
-        else: 
+            weights_left = np.ones(len(X_left))  # Example: Replace with actual weights if available
+            left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1, w=weights_left)
+            x_vals_left = np.array([min(X_left[:,0]), max(X_left[:,0])])
+            y_vals_left = np.polyval(left_lane, x_vals_left)
+            cv2.line(poly_debug_img, 
+                    (int(x_vals_left[0] + crop_width), int(y_vals_left[0] + crop_height)),
+                    (int(x_vals_left[1] + crop_width), int(y_vals_left[1] + crop_height)), 
+                    (255, 0, 0), 2)  # Blue line
+            print(f"Adjusted Left Lane Line: from ({int(x_vals_left[0])}, {int(y_vals_left[0])}) to ({int(x_vals_left[1])}, {int(y_vals_left[1])})")
+        else:
             print("Not Enouch Centorids, or no centorids calculated")
-
         if len(X_right) > 1:
-            # Calculate polynomial fit for the right lane
-            right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1)
-            # Define the range for the x-coordinates
-            x_min_right = int(min(X_right[:,0]))
-            x_max_right = int(max(X_right[:,0]))
-            # Calculate the y-coordinates for the line endpoints using the polynomial
-            y_min_right = int(right_lane[0] * x_min_right + right_lane[1])
-            y_max_right = int(right_lane[0] * x_max_right + right_lane[1])
-            # Draw the right lane line
-            cv2.line(poly_debug_img, (x_min_right + crop_width, y_min_right + crop_height), 
-                    (x_max_right + crop_width, y_max_right + crop_height), (0, 255, 0), 2)  # Yellow line
-            print(f"Right Lane Line: from ({x_min_right}, {y_min_right}) to ({x_max_right}, {y_max_right})")
+            weights_right = np.ones(len(X_right))  # Example: Replace with actual weights if available
+            right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1, w=weights_right)
+            x_vals_right = np.array([min(X_right[:,0]), max(X_right[:,0])])
+            y_vals_right = np.polyval(right_lane, x_vals_right)
+            cv2.line(poly_debug_img, 
+                    (int(x_vals_right[0] + crop_width), int(y_vals_right[0] + crop_height)),
+                    (int(x_vals_right[1] + crop_width), int(y_vals_right[1] + crop_height)), 
+                    (0, 255, 255), 2)  # Yellow line
+            print(f"Adjusted Right Lane Line: from ({int(x_vals_right[0])}, {int(y_vals_right[0])}) to ({int(x_vals_right[1])}, {int(y_vals_right[1])})")
         else:
             print("Not Enouch Centorids, or no centorids calculated")
 
