@@ -263,15 +263,17 @@ for i in times2Run:
 
         x_start_right = None
         x_start_left = None
+        
 
         if len(X_right) > 1:
             print(f"Right side has {X_right.shape[0]} points, applying polyfit...")
             right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1, w=X_right[:,1])
             print(f"Polynomial coefficients (slope, intercept) for right lane: {right_lane}")
-            y1_right = right_lane[0] * 219 + right_lane[1]
-            y2_right = right_lane[0] * 319 + right_lane[1]
-            x1_right, y1r = 219, int(y1_right)
-            x2_right, y2r = 319, int(y2_right)
+            x_min, x_max = np.min(X_right[:,0]), np.max(X_right[:,0])
+            y1_left = left_lane[0] * x_min + left_lane[1]
+            y2_left = left_lane[0] * x_max + left_lane[1]
+            x1_left, y1l = int(x_min), int(y1_left)
+            x2_left, y2l = int(x_max), int(y2_left)
             print(f"Calculated y1: {y1_right}, y2: {y2_right} for x=219 and x=319")
             x_start_right = int((25 - right_lane[1])/(right_lane[0]+0.001))
             x2_right, y2r = 319, int(y2_right)
@@ -284,10 +286,11 @@ for i in times2Run:
             print(f"Left side has {X_left.shape[0]} points, applying polyfit...")
             left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1, w=X_left[:,1])
             print(f"Polynomial coefficients (slope, intercept) for left lane: {left_lane}")
-            y1_left = left_lane[0] * 0 + left_lane[1]
-            y2_left = left_lane[0] * 100 + left_lane[1]
-            x1_left, y1l = 0, int(y1_left)
-            x2_left, y2l = 100, int(y2_left)
+            x_min, x_max = np.min(X_right[:,0]), np.max(X_right[:,0])
+            y1_right = right_lane[0] * x_min + right_lane[1]
+            y2_right = right_lane[0] * x_max + right_lane[1]
+            x1_right, y1r = int(x_min), int(y1_right)
+            x2_right, y2r = int(x_max), int(y2_right)
             print(f"Calculated y1: {y1_left}, y2: {y2_left} for x=0 and x=100")
             x_start_left = int((25 - left_lane[1])/(left_lane[0]+0.001))
             cv2.line(poly_debug_img, (x1_left + crop_width, y1l + crop_height), 
