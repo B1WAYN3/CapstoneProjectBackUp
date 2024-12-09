@@ -351,6 +351,8 @@ for i in times2Run:
         text = str(stable_steering_angle)
         cv2.putText(poly_debug_img, text, (110, 30 ), font, 1, (0, 0, 255), 2)
         print("Steering angle text written on image.")
+        text = str(servo_angle)
+        cv2.putText(poly_debug_img, text, (120, 40), font, 1, (0, 0, 255), 2)
 
         top_section = raw_image[:crop_height,:]
         top_h, top_w, _ = top_section.shape
