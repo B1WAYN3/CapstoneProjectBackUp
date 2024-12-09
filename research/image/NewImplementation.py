@@ -334,7 +334,7 @@ for i in times2Run:
             print("No lanes detected. Using default mid_star: 159")
 
         print('Computing servo angle from mid_star offset...')
-
+        dx = mid_star - 160
         servo_angle = 90 - (dx * (90/160.0))
         servo_angle = np.clip(servo_angle, 0, 180)
         print(f"Calculated servo angle: {servo_angle}")
@@ -349,6 +349,7 @@ for i in times2Run:
         text = str(servo_angle)
         cv2.putText(poly_debug_img, text, (130, 50), font, 1, (0, 0, 255), 2)
 
+        # Previous code...
         top_section = raw_image[:crop_height,:]
         top_h, top_w, _ = top_section.shape
         poly_h, poly_w, _ = poly_debug_img.shape
@@ -363,22 +364,19 @@ for i in times2Run:
 
         height, width, _ = new_frame.shape
 
-        # Define the bottom center of the image as the pivot point for drawing the line
+        # --- Start of the modified line drawing code ---
+        # Draw the magenta line at the bottom center representing the steering angle
         center_x = width // 2
-        center_y = height - 50  # 50 pixels from bottom, adjust as desired
-        line_length = 100       # length of the line representing steering direction
+        center_y = height - 50  # 50 px from the bottom edge
+        line_length = 100
 
-        # Convert servo_angle to radians and rotate line so that:
-        # servo_angle=90 => line straight up
-        # servo_angle=0 => line to the right
-        # servo_angle=180 => line to the left
         theta = np.deg2rad(90 - servo_angle)
-
-        # Compute end coordinates of the line based on angle
         end_x = int(center_x + line_length * np.sin(theta))
         end_y = int(center_y - line_length * np.cos(theta))
+
         cv2.line(new_frame, (center_x, center_y), (end_x, end_y), (255,0,255), 5)
-        print("Drew steering line on new_frame.")
+        print("Drew steering line at bottom center of new_frame.")
+        # --- End of the modified line drawing code ---
 
         # Overlay centroids onto new_frame (add offsets)
         print("Overlaying centroids onto the final image...")
