@@ -35,7 +35,6 @@ def main():
     Motor_Speed(pca, 0.24)  # Start with motor at 0.24
     try:
         while True:
-            # object_detected_behind = False  # Reset flag each cycle
             for scan in lidar.iter_scans():
                 for (_, angle, distance) in scan:
                     angle = int(angle)
