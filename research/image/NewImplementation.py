@@ -5,6 +5,8 @@ import datetime
 import math
 import sys
 import os
+import RANSACRegressor
+from sklearn.linear_model import RANSACRegressor
 
 # Constants
 SCREEN_WIDTH = 640
@@ -266,30 +268,29 @@ for i in times2Run:
         x_start_left = None
         
 
-        if len(X_left) > 1:
-            weights_left = np.ones(len(X_left))  # Example: Replace with actual weights if available
-            left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1, w=weights_left)
-            x_vals_left = np.array([min(X_left[:,0]), max(X_left[:,0])])
-            y_vals_left = np.polyval(left_lane, x_vals_left)
-            cv2.line(poly_debug_img, 
-                    (int(x_vals_left[0] + crop_width), int(y_vals_left[0] + crop_height)),
-                    (int(x_vals_left[1] + crop_width), int(y_vals_left[1] + crop_height)), 
-                    (255, 0, 0), 2)  # Blue line
-            print(f"Adjusted Left Lane Line: from ({int(x_vals_left[0])}, {int(y_vals_left[0])}) to ({int(x_vals_left[1])}, {int(y_vals_left[1])})")
+        # Process left lane points
+        if len(X_left) > 0:
+            ransac = RANSACRegressor()
+            X_left = np.array(X_left)
+            ransac.fit(X_left[:, 0].reshape(-1, 1), X_left[:, 1])
+            line_X = np.arange(X_left[:, 0].min(), X_left[:, 0].max()).reshape(-1, 1)
+            line_y_ransac = ransac.predict(line_X)
+            cv2.polylines(poly_debug_img, [np.int32(list(zip(line_X.flatten(), line_y_ransac.flatten())))], False, (255, 0, 0), 2)
+            print(f"RANSAC Left Lane: X range {line_X.flatten()[0]} to {line_X.flatten()[-1]}, Y range {line_y_ransac[0]} to {line_y_ransac[-1]}")
         else:
-            print("Not Enouch Centorids, or no centorids calculated")
-        if len(X_right) > 1:
-            weights_right = np.ones(len(X_right))  # Example: Replace with actual weights if available
-            right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1, w=weights_right)
-            x_vals_right = np.array([min(X_right[:,0]), max(X_right[:,0])])
-            y_vals_right = np.polyval(right_lane, x_vals_right)
-            cv2.line(poly_debug_img, 
-                    (int(x_vals_right[0] + crop_width), int(y_vals_right[0] + crop_height)),
-                    (int(x_vals_right[1] + crop_width), int(y_vals_right[1] + crop_height)), 
-                    (0, 255, 255), 2)  # Yellow line
-            print(f"Adjusted Right Lane Line: from ({int(x_vals_right[0])}, {int(y_vals_right[0])}) to ({int(x_vals_right[1])}, {int(y_vals_right[1])})")
+            print("No valid points found for left lane detection.")
+
+        # Process right lane points
+        if len(X_right) > 0:
+            ransac = RANSACRegressor()
+            X_right = np.array(X_right)
+            ransac.fit(X_right[:, 0].reshape(-1, 1), X_right[:, 1])
+            line_X = np.arange(X_right[:, 0].min(), X_right[:, 0].max()).reshape(-1, 1)
+            line_y_ransac = ransac.predict(line_X)
+            cv2.polylines(poly_debug_img, [np.int32(list(zip(line_X.flatten(), line_y_ransac.flatten())))], False, (0, 255, 255), 2)
+            print(f"RANSAC Right Lane: X range {line_X.flatten()[0]} to {line_X.flatten()[-1]}, Y range {line_y_ransac[0]} to {line_y_ransac[-1]}")
         else:
-            print("Not Enouch Centorids, or no centorids calculated")
+            print("No valid points found for right lane detection.")
 
         cv2.imwrite(os.path.join(path, f"polynomial_lines_{getTime()}.jpg"), poly_debug_img)
         print("Polynomial lines computed and visualized.")
