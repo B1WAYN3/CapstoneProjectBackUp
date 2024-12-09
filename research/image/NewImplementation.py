@@ -270,10 +270,10 @@ for i in times2Run:
             right_lane = np.polyfit(X_right[:,0], X_right[:,1], 1, w=X_right[:,1])
             print(f"Polynomial coefficients (slope, intercept) for right lane: {right_lane}")
             x_min, x_max = np.min(X_right[:,0]), np.max(X_right[:,0])
-            y1_left = left_lane[0] * x_min + left_lane[1]
-            y2_left = left_lane[0] * x_max + left_lane[1]
-            x1_left, y1l = int(x_min), int(y1_left)
-            x2_left, y2l = int(x_max), int(y2_left)
+            y1_right = right_lane[0] * x_min + right_lane[1]
+            y2_right = right_lane[0] * x_max + right_lane[1]
+            x1_right, y1r = int(x_min), int(y1_right)
+            x2_right, y2r = int(x_max), int(y2_right)
             print(f"Calculated y1: {y1_right}, y2: {y2_right} for x=219 and x=319")
             x_start_right = int((25 - right_lane[1])/(right_lane[0]+0.001))
             x2_right, y2r = 319, int(y2_right)
@@ -287,10 +287,10 @@ for i in times2Run:
             left_lane = np.polyfit(X_left[:,0], X_left[:,1], 1, w=X_left[:,1])
             print(f"Polynomial coefficients (slope, intercept) for left lane: {left_lane}")
             x_min, x_max = np.min(X_left[:,0]), np.max(X_left[:,0])
-            y1_right = right_lane[0] * x_min + right_lane[1]
-            y2_right = right_lane[0] * x_max + right_lane[1]
-            x1_right, y1r = int(x_min), int(y1_right)
-            x2_right, y2r = int(x_max), int(y2_right)
+            y1_left = left_lane[0] * x_min + left_lane[1]
+            y2_left = left_lane[0] * x_max + left_lane[1]
+            x1_left, y1l = int(x_min), int(y1_left)
+            x2_left, y2l = int(x_max), int(y2_left)
             print(f"Calculated y1: {y1_left}, y2: {y2_left} for x=0 and x=100")
             x_start_left = int((25 - left_lane[1])/(left_lane[0]+0.001))
             cv2.line(poly_debug_img, (x1_left + crop_width, y1l + crop_height), 
