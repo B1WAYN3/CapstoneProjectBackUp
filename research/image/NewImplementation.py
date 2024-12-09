@@ -135,13 +135,26 @@ for i in times2Run:
 
     print('Applying Region of Interest (ROI)...')
     mask_roi = np.zeros_like(mask_edges)
-    polygon = np.array([[
-        (0, mask_edges.shape[0]),
-        (SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2),
-        (SCREEN_WIDTH // 2 + 50, SCREEN_HEIGHT // 2),
-        (SCREEN_WIDTH, mask_edges.shape[0])
+    # Define separate polygons for left and right lanes
+    left_polygon = np.array([[
+        (0, mask_edges.shape[0]),                                  # Bottom-left corner
+        (int(SCREEN_WIDTH * 0.3), int(SCREEN_HEIGHT * 0.6)),      # Top-left point
+        (int(SCREEN_WIDTH * 0.35), int(SCREEN_HEIGHT * 0.6)),
+        (int(SCREEN_WIDTH * 0.4), mask_edges.shape[0])            # Bottom-middle-left
     ]], np.int32)
-    cv2.fillPoly(mask_roi, polygon, 255)
+
+    right_polygon = np.array([[
+        (SCREEN_WIDTH, mask_edges.shape[0]),                       # Bottom-right corner
+        (int(SCREEN_WIDTH * 0.7), int(SCREEN_HEIGHT * 0.6)),      # Top-right point
+        (int(SCREEN_WIDTH * 0.65), int(SCREEN_HEIGHT * 0.6)),
+        (int(SCREEN_WIDTH * 0.6), mask_edges.shape[0])            # Bottom-middle-right
+    ]], np.int32)
+
+    # Fill the left and right polygons on the ROI mask
+    cv2.fillPoly(mask_roi, left_polygon, 255)
+    cv2.fillPoly(mask_roi, right_polygon, 255)
+
+    # Apply the ROI mask to the edge-detected image
     mask_edges = cv2.bitwise_and(mask_edges, mask_roi)
 
     crop_width = 20
