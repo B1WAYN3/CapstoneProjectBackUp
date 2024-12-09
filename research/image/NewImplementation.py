@@ -41,6 +41,26 @@ def stabilize_steering_angle(curr_steering_angle, last_steering_angle=None, alph
             return np.clip(int(alpha * curr_steering_angle + (1.-alpha) * last_steering_angle),
                            last_steering_angle-3, last_steering_angle+3)
 
+# For reference, we have arrays: X_left and X_right
+# They contain the (x,y) coordinates of lane points on each side.
+# Let's define a function to estimate mid_star from one lane using a fixed lane width assumption.
+def estimate_mid_star_from_one_lane(lane_points, lane_side='right', lane_width=60):
+    # lane_points is either X_left or X_right
+    # We'll pick a reference point from these lane points. A good choice might be the average x-position.
+    if len(lane_points) > 0:
+        avg_x = np.mean(lane_points[:, 0])
+        # If we only have the right lane, assume center is lane_width/2 to the left
+        # If we only have the left lane, assume center is lane_width/2 to the right
+        if lane_side == 'right':
+            return avg_x - (lane_width / 2.0)
+        else:
+            return avg_x + (lane_width / 2.0)
+    else:
+        # If somehow lane_points is empty, fallback to a default
+        return 159
+    
+
+
 times2Run = {1}
 
 for i in times2Run:
@@ -295,31 +315,37 @@ for i in times2Run:
         print("Polynomial lines computed and visualized.")
 
         print("Starting steering angle calculation...")
+        
         if (x_start_right is not None) and (x_start_left is not None):
             mid_star = 0.5 * (x_start_right + x_start_left)
             print(f"Both lanes detected. mid_star: {mid_star}")
         elif (x_start_right is not None) and (x_start_left is None):
-            mid_star = (25-100)/right_lane[0] + 160
-            print(f"Only right lane detected. mid_star: {mid_star}")
+            # No defined right_lane array, let's use X_right data
+            # Estimate mid_star from right lane data alone
+            mid_star = estimate_mid_star_from_one_lane(X_right, lane_side='right')
+            print(f"Only right lane detected. Estimated mid_star: {mid_star}")
         elif (x_start_right is None) and (x_start_left is not None):
-            mid_star = (25-100)/left_lane[0] + 160
-            print(f"Only left lane detected. mid_star: {mid_star}")
+            # No defined left_lane array, let's use X_left data
+            # Estimate mid_star from left lane data alone
+            mid_star = estimate_mid_star_from_one_lane(X_left, lane_side='left')
+            print(f"Only left lane detected. Estimated mid_star: {mid_star}")
         else:
             mid_star = 159
             print("No lanes detected. Using default mid_star: 159")
 
-        print('Computing steering angle...')
-        if np.abs(mid_star-160)<2:
-            steering_angle = 90
-            print(f'Current angle for TRUE (default): {np.abs(mid_star-160)}')
-            print("Steering angle close to center, set to 90.")
-        else:
-            steering_angle = 90 + np.degrees(np.arctan((mid_star-160)/75.))
-            steering_angle = np.clip(steering_angle,55,135)
-            print(f"Calculated steering angle: {steering_angle}")
+        print('Computing servo angle from mid_star offset...')
 
-        stable_steering_angle = stabilize_steering_angle(steering_angle,past_steering_angle)
-        print(f"Stabilized steering angle: {stable_steering_angle}")
+        # Linear mapping from horizontal offset to servo angle
+        dx = mid_star - 160  # Offset from center (160)
+        # dx=0    => servo=90 (straight)
+        # dx=+160 => servo=0 (full right)
+        # dx=-160 => servo=180 (full left)
+        servo_angle = 90 - (dx * (90/160.0))
+        servo_angle = np.clip(servo_angle, 0, 180)
+        print(f"Calculated servo angle: {servo_angle}")
+
+        stable_steering_angle = stabilize_steering_angle(servo_angle, past_steering_angle)
+        print(f"Stabilized servo angle: {stable_steering_angle}")
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         text = str(stable_steering_angle)
@@ -340,28 +366,12 @@ for i in times2Run:
 
         height, width, _ = new_frame.shape
 
-        # Draw mid_star line
-        if (x_start_right is not None) and (x_start_left is not None):
-            mid_star_adj_x = int(mid_star) + crop_width
-            y_start = 25 + crop_height
-            y_end = 100 + crop_height
-            cv2.line(new_frame,(int(np.clip(mid_star_adj_x,-10000,10000)),y_start),(160+crop_width,y_end),(255,0,255),5)
-        elif (x_start_right is not None) and (x_start_left is None):
-            mid_star_adj_x = int(mid_star) + crop_width
-            y_start = 25 + crop_height
-            y_end = 100 + crop_height
-            cv2.line(new_frame,(int(np.clip(mid_star_adj_x,-10000,10000)),y_start),(160+crop_width,y_end),(255,0,255),5)
-        elif (x_start_right is None) and (x_start_left is not None):
-            mid_star_adj_x = int(mid_star) + crop_width
-            y_start = 25 + crop_height
-            y_end = 100 + crop_height
-            cv2.line(new_frame,(int(np.clip(mid_star_adj_x,-10000,10000)),y_start),(160+crop_width,y_end),(255,0,255),5)
-        else:
-            mid_star_adj_x = int(mid_star) + crop_width
-            y_start = 25 + crop_height
-            y_end = 100 + crop_height
-            cv2.line(new_frame,(int(np.clip(mid_star_adj_x,-10000,10000)),y_start),(160+crop_width,y_end),(255,0,255),5)
-
+        # Draw the magenta line representing the steering direction
+        mid_star_adj_x = int(mid_star) + crop_width
+        y_start = 25 + crop_height
+        y_end = 100 + crop_height
+        cv2.line(new_frame, (int(np.clip(mid_star_adj_x, -10000, 10000)), y_start), 
+                (160+crop_width, y_end), (255,0,255), 5)
         print("Drew steering line on new_frame.")
 
         # Overlay centroids onto new_frame (add offsets)
@@ -369,8 +379,7 @@ for i in times2Run:
         for data_item in patch_centroids_data:
             cx, cy = data_item['centroid']
             cv2.circle(new_frame, (cx + crop_width, cy + crop_height), 5, (0,165,255), -1)
-            # print(f"Overlayed centroid at ({cx + crop_width}, {cy + crop_height})")
 
         cv2.imwrite(os.path.join(path, f"final_frame_image_{getTime()}.jpg"), new_frame)
-        print("Steering angle computed and visualized.")
+        print("Steering angle computed, visualized, and saved.")
         print("End.")
