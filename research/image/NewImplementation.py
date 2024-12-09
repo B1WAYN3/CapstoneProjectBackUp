@@ -12,7 +12,7 @@ SCREEN_HEIGHT = 480
 past_steering_angle = 0
 row_threshold = 0
 path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
-image_import_path = path = "/home/pi/CapstoneProjectBackUp/research/image/Data/raw_imports"
+image_import_path = "/home/pi/CapstoneProjectBackUp/research/image/Data/raw_imports"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 120 pixels
 ifblue = False
 use_live_camera = False  # Set this to False to load image from file
