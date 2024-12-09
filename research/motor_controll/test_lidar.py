@@ -33,7 +33,7 @@ def scale_lidar_distance(distance, max_distance=3000):
 
 def main():
     update_steering_angle(90)  # Start with neutral steering angle
-    Motor_Speed(pca, 0.3)  # Start with motor off
+    Motor_Speed(pca, 0.24)  # Start with motor at 0.24
     # object_detected_behind = False  # Flag to detect objects behind the vehicle
 
     try:
@@ -46,7 +46,7 @@ def main():
 
                     # Detect objects around the vehicle
                     if distance <= 350 and (angle in range(315, 360) or angle in range(0, 45)):
-                        print(f"Object detected behind at {distance} mm and {angle} degrees. Speeding up.")
+                        print(f"Object detected behind at {distance} mm and {angle} degrees.")
                         # Motor_Speed(pca, 0.25)
                         # object_detected_behind = True  # Set flag when object is detected
                     elif distance <= 800 and (angle in range(165, 200)):
@@ -67,7 +67,7 @@ def main():
 
     except KeyboardInterrupt:
         print('Stopping due to keyboard interrupt.')
-        Motor_Speed(pca, 0)  # Ensure the motor is stopped when interrupting the program
+        Motor_Speed(pca, 0)  
     finally:
         lidar.stop()
         lidar.disconnect()
