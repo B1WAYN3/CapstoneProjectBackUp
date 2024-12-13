@@ -100,6 +100,12 @@ for i in times2Run:
     img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_RGB2HSV)
     img_crop_hsv = img_hsv
 
+    center_rect = img_hsv[int(img_hsv.shape[0] * 0.4):int(img_hsv.shape[0] * 0.6), int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6)]
+    median_brightness_center = np.median(center_rect[:, :, 2])
+    if median_brightness_center > 200:  # Threshold for excessive brightness
+        print("Excessive brightness detected in the center, adjusting mask...")
+        img_hsv[:, int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6), 2] = 0
+
     print('Creating binary masks for white and yellow lanes after HSV...')
     if ifblue:
         # Existing blue lane detection
