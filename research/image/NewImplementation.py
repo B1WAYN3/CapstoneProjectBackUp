@@ -16,7 +16,7 @@ path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
 image_import_path = "/home/pi/CapstoneProjectBackUp/research/image/Data/raw_imports"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 48 pixels
 ifblue = False
-use_live_camera = True  # Set this to False to load image from file
+use_live_camera = False  # Set this to False to load image from file
 image_center = SCREEN_WIDTH // 2  # Initialize image_center based on SCREEN_WIDTH
 
 # Initialize camera
