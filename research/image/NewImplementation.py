@@ -12,8 +12,8 @@ SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
 past_steering_angle = 0
 row_threshold = 0
-path = "/home/pi/CapstoneProjectBackUp/research/image/Data"
-image_import_path = "/home/pi/CapstoneProjectBackUp/research/image/Data/raw_imports"
+path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data"
+image_import_path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data/raw_imports"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 48 pixels
 ifblue = False
 use_live_camera = False  # Set this to False to load image from file
@@ -163,6 +163,7 @@ for i in times2Run:
 
     # Apply the ROI mask to the edge-detected image
     mask_edges = cv2.bitwise_and(mask_edges, mask_roi)
+    print("Saving Mask Edges after ROI Process.")
     cv2.imwrite(os.path.join(path, f"mask_roi_after_{getTime()}.jpg"), mask_edges)
 
     crop_width = 20
