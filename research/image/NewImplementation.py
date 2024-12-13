@@ -217,6 +217,7 @@ for i in times2Run:
     minLineLength = 40  # Reduced from 60 to capture shorter lines
     maxLineGap = 30     # Increased from 25 to allow more gap between segments
     angle_threshold = 45  # Widened from 25 degrees to allow more slanted lines
+    min_threshold = 30
 
     # Hough Transform application with new parameters
     print('Applying Probabilistic Hough Transform with adjusted parameters...')
