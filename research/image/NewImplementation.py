@@ -158,7 +158,7 @@ for i in times2Run:
     open_kernel = np.ones((3, 8), np.uint8)
     mask = cv2.morphologyEx(mask_closed, cv2.MORPH_OPEN, open_kernel)
     print("Saving Mask after Morphological Operations")
-    cv2.imwrite(os.path.join(path, f"mark_morphological_{getTime()}.jpg"), mask)
+    cv2.imwrite(os.path.join(path, f"mask_morphological_{getTime()}.jpg"), mask)
 
     print('Applying Gaussian blur on mask...')
     mask_blurred = cv2.GaussianBlur(mask, (5, 5), 0)
@@ -174,12 +174,19 @@ for i in times2Run:
     # Define polygons more narrowly focused on expected lane areas, avoiding the center
     height_roi, width_roi = mask_edges.shape
 
-    left_polygon = np.array([[(0, height_roi), (width_roi * 0.3, height_roi * 0.6), (width_roi * 0.4, height_roi * 0.6), (width_roi * 0.5, height_roi)]], dtype=np.int32)
+    left_polygon = np.array([[(0, height_roi), (width_roi * 0.2, int(height_roi * 0.6)), (width_roi * 0.4, int(height_roi * 0.6)), (width_roi * 0.5, height_roi)]], dtype=np.int32)
+    right_polygon = np.array([[(width_roi, height_roi), (width_roi * 0.8, int(height_roi * 0.6)), (width_roi * 0.6, int(height_roi * 0.6)), (width_roi * 0.5, height_roi)]], dtype=np.int32)
 
-    right_polygon = np.array([[(width_roi, height_roi), (width_roi * 0.7, height_roi * 0.6), (width_roi * 0.6, height_roi * 0.6), (width_roi * 0.5, height_roi)]], dtype=np.int32)
+    # Visualize ROI polygons on a copy of the original edges image for debugging
+    debug_image = cv2.cvtColor(mask_edges, cv2.COLOR_GRAY2BGR)  # Convert to BGR for coloring
+    cv2.polylines(debug_image, [left_polygon], True, (0, 255, 0), 2)  # Draw left polygon in green
+    cv2.polylines(debug_image, [right_polygon], True, (0, 0, 255), 2)  # Draw right polygon in red
+    cv2.imwrite(os.path.join(path, f"visual_roi_polygons_{getTime()}.jpg"), debug_image)
 
     # Fill the left and right polygons on the ROI mask
     cv2.fillPoly(mask_roi, [left_polygon, right_polygon], 255)
+    cv2.imwrite(os.path.join(path, f"mask_roi_filled_{getTime()}.jpg"), mask_roi)  # Save the filled ROI mask
+
 
     # Apply the ROI mask to the edge-detected image
     mask_edges = cv2.bitwise_and(mask_edges, mask_roi)
