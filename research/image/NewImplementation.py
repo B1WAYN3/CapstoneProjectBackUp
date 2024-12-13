@@ -102,11 +102,11 @@ for i in times2Run:
 
     center_rect_width_start = int(img_hsv.shape[1] * 0.30)
     center_rect_width_end = int(img_hsv.shape[1] * 0.80)
-    center_rect = img_hsv[int(img_hsv.shape[0] * 0.4):int(img_hsv.shape[0] * 0.6), center_rect_width_start:center_rect_width_end]
+    center_rect = img_hsv[int(img_hsv.shape[0] * 0.30):int(img_hsv.shape[0] * 0.80), center_rect_width_start:center_rect_width_end]
 
     median_brightness_center = np.median(center_rect[:, :, 2])
     if median_brightness_center > 100:  # Threshold for excessive brightness
-        print("Excessive brightness detected in the center, adjusting mask...")
+        print("Excessive brightness/object detected in the center, adjusting mask...")
         img_hsv[:, int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6), 2] = 0
 
     print('Creating binary masks for white and yellow lanes after HSV...')
