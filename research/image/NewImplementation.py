@@ -16,6 +16,9 @@ path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data"
 image_import_path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data/raw_imports"
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 48 pixels
 ifblue = False
+# Set a threshold at 5% of the observed peak for a clear yellow presence
+yellow_threshold = 500 * 0.05  # Adjust based on actual peak observations
+
 use_live_camera = True  # Set this to False to load image from file
 print(f"Use_live_camera set too: {use_live_camera}")
 image_center = SCREEN_WIDTH // 2  # Initialize image_center based on SCREEN_WIDTH
@@ -104,12 +107,25 @@ for i in times2Run:
         upper_hsv = np.array([130, 255, 255])
         mask = cv2.inRange(img_crop_hsv, lower_hsv, upper_hsv)
     else:
-        # Define HSV ranges for white and yellow lanes
-        lower_white = np.array([0, 0, 200])
+        #Dynamically calculate white threshold values for different brightness. 
+        median_brightness = np.median(img_hsv[:, :, 2])
+
+        # Adjust the lower value of the V channel dynamically based on the median brightness. 
+        lower_white = np.array([0, 0, max(100, median_brightness - 30)])
         upper_white = np.array([180, 30, 255])
-        
-        lower_yellow = np.array([20, 100, 100])
-        upper_yellow = np.array([30, 255, 255])
+
+        # dynamically set the yellow lines deteciton format based on conditions. 
+        # Computer the historgram for the Hue channel in the typical yellow range
+        hue_hist = cv2.calcHist([img_hsv], [0], None, [180], [20,30])
+        yellow_presence = np.sum(hue_hist)
+
+        if yellow_presence > yellow_threshold:  # Define a suitable threshold based on your observations
+            lower_yellow = np.array([20, 100, 100])
+            upper_yellow = np.array([30, 255, 255])
+        else:
+            # Adjust the range if yellow is not prominently found
+            lower_yellow = np.array([22, 80, 80])
+            upper_yellow = np.array([28, 255, 255])
         
         # Create masks for white and yellow lanes
         mask_white = cv2.inRange(img_crop_hsv, lower_white, upper_white)
