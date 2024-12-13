@@ -153,9 +153,9 @@ for i in times2Run:
     
 
     print('Applying morphological operations to enhance lane lines...')
-    close_kernel = np.ones((5, 15), np.uint8)
+    close_kernel = np.ones((5, 13), np.uint8)
     mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, close_kernel)
-    open_kernel = np.ones((3, 9), np.uint8)
+    open_kernel = np.ones((3, 8), np.uint8)
     mask = cv2.morphologyEx(mask_closed, cv2.MORPH_OPEN, open_kernel)
     print("Saving Mask after Morphological Operations")
     cv2.imwrite(os.path.join(path, f"mark_morphological_{getTime()}.jpg"), mask)
