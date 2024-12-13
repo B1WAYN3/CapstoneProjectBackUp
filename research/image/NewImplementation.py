@@ -144,9 +144,10 @@ for i in times2Run:
     
 
     print('Applying morphological operations to enhance lane lines...')
-    kernel = np.ones((5, 5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    close_kernel = np.ones((5, 15), np.uint8)
+    mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, close_kernel)
+    open_kernel = np.ones((3, 9), np.uint8)
+    mask = cv2.morphologyEx(mask_closed, cv2.MORPH_OPEN, open_kernel)
     print("Saving Mask after Morphological Operations")
     cv2.imwrite(os.path.join(path, f"mark_morphological_{getTime()}.jpg"), mask)
 
@@ -158,32 +159,23 @@ for i in times2Run:
     cv2.imwrite(os.path.join(path, f"mask_edges_canny_filter_{getTime()}.jpg"), mask_edges)
 
     print('Applying Region of Interest (ROI)...')
-    mask_roi = np.zeros_like(mask_edges)
+    mask_roi = np.zeros_like(mask_edges, dtype=np.uint8)
     cv2.imwrite(os.path.join(path, f"mask_roi_before_{getTime()}.jpg"), mask_roi)
 
-    # Define separate polygons for left and right lanes
-    left_polygon = np.array([[
-        (0, mask_edges.shape[0]),                                  # Bottom-left corner
-        (int(SCREEN_WIDTH * 0.3), int(SCREEN_HEIGHT * 0.6)),      # Top-left point
-        (int(SCREEN_WIDTH * 0.35), int(SCREEN_HEIGHT * 0.6)),
-        (int(SCREEN_WIDTH * 0.4), mask_edges.shape[0])            # Bottom-middle-left
-    ]], np.int32)
+    # Define polygons more narrowly focused on expected lane areas, avoiding the center
+    height_roi, width_roi = mask_edges.shape
 
-    right_polygon = np.array([[
-        (SCREEN_WIDTH, mask_edges.shape[0]),                       # Bottom-right corner
-        (int(SCREEN_WIDTH * 0.7), int(SCREEN_HEIGHT * 0.6)),      # Top-right point
-        (int(SCREEN_WIDTH * 0.65), int(SCREEN_HEIGHT * 0.6)),
-        (int(SCREEN_WIDTH * 0.6), mask_edges.shape[0])            # Bottom-middle-right
-    ]], np.int32)
+    left_polygon = np.array([[(0, height_roi), (width_roi * 0.3, height_roi * 0.6), (width_roi * 0.4, height_roi * 0.6), (width_roi * 0.5, height_roi)]], dtype=np.int32)
+
+    right_polygon = np.array([[(width_roi, height_roi), (width_roi * 0.7, height_roi * 0.6), (width_roi * 0.6, height_roi * 0.6), (width_roi * 0.5, height_roi)]], dtype=np.int32)
 
     # Fill the left and right polygons on the ROI mask
-    cv2.fillPoly(mask_roi, left_polygon, 255)
-    cv2.fillPoly(mask_roi, right_polygon, 255)
+    cv2.fillPoly(mask_roi, [left_polygon, right_polygon], 255)
 
     # Apply the ROI mask to the edge-detected image
     mask_edges = cv2.bitwise_and(mask_edges, mask_roi)
     print("Saving Mask Edges after ROI Process.")
-    cv2.imwrite(os.path.join(path, f"mask_roi_after_{getTime()}.jpg"), mask_edges)
+    cv2.imwrite(os.path.join(path, f"mask_edges_roi_after_{getTime()}.jpg"), mask_edges)
 
     crop_width = 20
     mask_edges = mask_edges[:, crop_width:]
