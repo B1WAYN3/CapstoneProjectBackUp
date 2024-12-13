@@ -74,14 +74,16 @@ for i in times2Run:
         if raw_image is None:
             print("Failed to load image from file.")
             break
-        print("Imported Image for Testing, no live data.")
+        print("Imported Image for Testing successful, no live data.")
 
+    print("Saving Raw Image before flipping.")
     cv2.imwrite(os.path.join(path, f"raw_image_{getTime()}.jpg"), raw_image)
 
     if raw_image.shape[1] != SCREEN_WIDTH or raw_image.shape[0] != SCREEN_HEIGHT:
         print(f"Warning: Image dimensions mismatch. Expected: {SCREEN_WIDTH}x{SCREEN_HEIGHT}, Got: {raw_image.shape[1]}x{raw_image.shape[0]}")
 
     raw_image = cv2.flip(raw_image, -1)
+    print("Saving Flipped Image.")
     cv2.imwrite(os.path.join(path, f"flipped_image_raw_{getTime()}.jpg"), raw_image)
 
     print('Img to color...')
@@ -111,24 +113,34 @@ for i in times2Run:
         # Create masks for white and yellow lanes
         mask_white = cv2.inRange(img_crop_hsv, lower_white, upper_white)
         mask_yellow = cv2.inRange(img_crop_hsv, lower_yellow, upper_yellow)
+        print("Saving White Mask")
+        cv2.imwrite(os.path.join(path, f"mask_white_{getTime()}.jpg"), mask_white)
+        print("Saving yellow Mask")
+        cv2.imwrite(os.path.join(path, f"mask_yellow_{getTime()}.jpg"), mask_yellow)
         
         # Combine masks to detect both white and yellow lanes
         mask = cv2.bitwise_or(mask_white, mask_yellow)
+        print("Saving Yellow and White ored Mask. ")
+        cv2.imwrite(os.path.join(path, f"mask_yellow_white_or_{getTime()}.jpg"), mask)
     
 
     print('Applying morphological operations to enhance lane lines...')
     kernel = np.ones((5, 5), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    print("Saving Mask after Morphological Operations")
+    cv2.imwrite(os.path.join(path, f"mark_morphological_{getTime()}.jpg"), mask)
 
     print('Applying Gaussian blur on mask...')
     mask_blurred = cv2.GaussianBlur(mask, (5, 5), 0)
 
     print('Applying Canny filter...')
     mask_edges = cv2.Canny(mask_blurred, 50, 150)
+    cv2.imwrite(os.path.join(path, f"mask_edges_canny_filter_{getTime()}.jpg"), mask_edges)
 
     print('Applying Region of Interest (ROI)...')
     mask_roi = np.zeros_like(mask_edges)
+    cv2.imwrite(os.path.join(path, f"mask_roi_before_{getTime()}.jpg"), mask_roi)
 
     # Define separate polygons for left and right lanes
     left_polygon = np.array([[
@@ -151,13 +163,14 @@ for i in times2Run:
 
     # Apply the ROI mask to the edge-detected image
     mask_edges = cv2.bitwise_and(mask_edges, mask_roi)
+    cv2.imwrite(os.path.join(path, f"mask_roi_after_{getTime()}.jpg"), mask_edges)
 
     crop_width = 20
     mask_edges = mask_edges[:, crop_width:]
     adjusted_screen_width = SCREEN_WIDTH - crop_width
     print(f"New width after cropping: {adjusted_screen_width}")
-
-    cv2.imwrite(os.path.join(path, f"cropped_mask_edges_{getTime()}.jpg"), mask_edges)
+    print("Saving Cropped Masked Edges Image.")
+    cv2.imwrite(os.path.join(path, f"cropped_mask_edges_after_some_filters{getTime()}.jpg"), mask_edges)
 
     # Update Hough Transform parameters
     minLineLength = 60  # Increased from 40 to further filter out shorter lines like street signs
@@ -187,16 +200,16 @@ for i in times2Run:
         print(f"Total detected lines: {len(lines)}, Filtered lines: {len(filtered_lines)}")
     else:
         hough_debug_img = None
-        print("No lines detected.")
+        print("No lines detected within the Probabilistic Hough Transform...")
 
     print("Saving Images without calculating angle.")
     cv2.imwrite(os.path.join(path, f"img_rgb_{getTime()}.jpg"), img_rgb)
     cv2.imwrite(os.path.join(path, f"img_bottom_half_bgr_{getTime()}.jpg"), img_bottom_half_bgr)
     cv2.imwrite(os.path.join(path, f"img_crop_hsv_{getTime()}.jpg"), img_crop_hsv)
-    cv2.imwrite(os.path.join(path, f"mask_{getTime()}.jpg"), mask)
     cv2.imwrite(os.path.join(path, f"mask_blurred_{getTime()}.jpg"), mask_blurred)
-    cv2.imwrite(os.path.join(path, f"mask_edges_{getTime()}.jpg"), mask_edges)
+    cv2.imwrite(os.path.join(path, f"mask_edges_final_{getTime()}.jpg"), mask_edges)
     if lines is not None:
+        print("Hough Transform successful, saving hough transform image.")
         cv2.imwrite(os.path.join(path, f"hough_lines_{getTime()}.jpg"), hough_debug_img)
 
     # Lower threshold more to get patches
@@ -263,7 +276,7 @@ for i in times2Run:
         cv2.imwrite(os.path.join(path, f"image_lines_masked_edges{getTime()}.jpg"), hough_debug_img)
 
     if lines is None:
-        print("No Lines Detected. Exiting Loop")
+        print("No Lines Detected in Path Seciton. Exiting Loop")
         break
     else:
         centroid_debug_image = hough_debug_img.copy()
@@ -388,14 +401,15 @@ for i in times2Run:
             print(f"Only left lane detected. Estimated mid_star: {mid_star}")
         else:
             mid_star = 159
-            print("No lanes detected. Using default mid_star: 159")
+            print("No lanes detected in midstar process. Using default mid_star: 159")
 
         print('Computing servo angle from mid_star offset...')
         dx = mid_star - 160  # Offset from center (160)
         servo_angle = 90 - (dx * (90/160.0))
         servo_angle = np.clip(servo_angle, 0, 180)
-        print(f"Calculated servo angle: {servo_angle}")
+        print(f"Calculated servo angle before stabilization: {servo_angle}")
 
+        print(f"Past Steering angle:{past_steering_angle}")
         stable_steering_angle = stabilize_steering_angle(servo_angle, past_steering_angle)
         print(f"Stabilized servo angle: {stable_steering_angle}")
 
