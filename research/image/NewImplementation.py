@@ -167,6 +167,13 @@ for i in times2Run:
     mask_edges = cv2.Canny(mask_blurred, 50, 150)
     cv2.imwrite(os.path.join(path, f"mask_edges_canny_filter_{getTime()}.jpg"), mask_edges)
 
+    crop_width = 20
+    mask_edges = mask_edges[:, crop_width:]
+    adjusted_screen_width = SCREEN_WIDTH - crop_width
+    print(f"New width after cropping: {adjusted_screen_width}")
+    print("Saving Cropped Masked Edges Image.")
+    cv2.imwrite(os.path.join(path, f"cropped_mask_edges_after_some_filters{getTime()}.jpg"), mask_edges)
+
     print('Applying Region of Interest (ROI)...')
     mask_roi = np.zeros_like(mask_edges, dtype=np.uint8)
     cv2.imwrite(os.path.join(path, f"mask_roi_before_{getTime()}.jpg"), mask_roi)
@@ -206,38 +213,28 @@ for i in times2Run:
     print("Applied ROI mask to edges and saved result.")
     cv2.imwrite(os.path.join(path, f"mask_edges_roi_after_{getTime()}.jpg"), mask_edges)
 
-    crop_width = 20
-    mask_edges = mask_edges[:, crop_width:]
-    adjusted_screen_width = SCREEN_WIDTH - crop_width
-    print(f"New width after cropping: {adjusted_screen_width}")
-    print("Saving Cropped Masked Edges Image.")
-    cv2.imwrite(os.path.join(path, f"cropped_mask_edges_after_some_filters{getTime()}.jpg"), mask_edges)
-
     # Update Hough Transform parameters
-    minLineLength = 60  # Increased from 40 to further filter out shorter lines like street signs
-    maxLineGap = 25     # Slightly increased from 20 to maintain continuity
-    min_threshold = 50  # Increased from 50 to require more votes for line detection
+    minLineLength = 40  # Reduced from 60 to capture shorter lines
+    maxLineGap = 30     # Increased from 25 to allow more gap between segments
+    angle_threshold = 45  # Widened from 25 degrees to allow more slanted lines
 
-    print('Applying Probabilistic Hough Transform...')
+    # Hough Transform application with new parameters
+    print('Applying Probabilistic Hough Transform with adjusted parameters...')
     lines = cv2.HoughLinesP(mask_edges, 1, np.pi/180, min_threshold, minLineLength, maxLineGap)
 
     if lines is not None:
         hough_debug_img = cv2.cvtColor(mask_edges, cv2.COLOR_GRAY2BGR)
         print("Detected lines (in mask_edges coords):")
-        # Initialize lists to hold filtered lines
         filtered_lines = []
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            # Calculate the angle of the line relative to the vertical axis
-            angle = math.degrees(math.atan2((x2 - x1), (y2 - y1)))
-            # Filter lines based on angle (e.g., only near vertical)
-            if -25 < angle < 25:
+            angle = math.degrees(math.atan2((y2 - y1), (x2 - x1)))
+            if -angle_threshold < angle < angle_threshold:
                 filtered_lines.append(line)
-                cv2.line(hough_debug_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                #print(f"Accepted Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
+                cv2.line(hough_debug_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                print(f"Accepted Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
             else:
-                print("__")
-                #print(f"Rejected Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
+                print(f"Rejected Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
         print(f"Total detected lines: {len(lines)}, Filtered lines: {len(filtered_lines)}")
     else:
         hough_debug_img = None
@@ -251,7 +248,7 @@ for i in times2Run:
     cv2.imwrite(os.path.join(path, f"mask_edges_final_{getTime()}.jpg"), mask_edges)
     if lines is not None:
         print("Hough Transform successful, saving hough transform image.")
-        cv2.imwrite(os.path.join(path, f"hough_lines_{getTime()}.jpg"), hough_debug_img)
+        cv2.imwrite(os.path.join(path, f"hough_lines_after_saving_{getTime()}.jpg"), hough_debug_img)
 
     # Lower threshold more to get patches
     threshold = 12
