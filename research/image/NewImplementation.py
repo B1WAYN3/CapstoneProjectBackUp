@@ -100,7 +100,10 @@ for i in times2Run:
     img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_RGB2HSV)
     img_crop_hsv = img_hsv
 
-    center_rect = img_hsv[int(img_hsv.shape[0] * 0.4):int(img_hsv.shape[0] * 0.6), int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6)]
+    center_rect_width_start = int(img_hsv.shape[1] * 0.4)
+    center_rect_width_end = int(img_hsv.shape[1] * 0.6) + int((img_hsv.shape[1] * 0.6 - img_hsv.shape[1] * 0.4) / 3)
+    center_rect = img_hsv[int(img_hsv.shape[0] * 0.4):int(img_hsv.shape[0] * 0.6), center_rect_width_start:center_rect_width_end]
+
     median_brightness_center = np.median(center_rect[:, :, 2])
     if median_brightness_center > 100:  # Threshold for excessive brightness
         print("Excessive brightness detected in the center, adjusting mask...")
