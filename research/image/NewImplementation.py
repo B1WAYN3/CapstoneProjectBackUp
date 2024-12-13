@@ -176,18 +176,18 @@ for i in times2Run:
 
     # Adjusted ROI polygons to be more rectangular
     left_polygon = np.array([
-        [(0, height_roi), 
-        (int(width_roi * 0.3), int(height_roi * 0.7)), 
-        (int(width_roi * 0.3), height_roi),
-        (0, height_roi)],
-        dtype=np.int32)
+    [0, height_roi],
+    [int(width_roi * 0.3), int(height_roi * 0.7)],
+    [int(width_roi * 0.3), height_roi],
+    [0, height_roi]
+    ], dtype=np.int32)
 
     right_polygon = np.array([
-        [(width_roi, height_roi), 
-        (int(width_roi * 0.7), int(height_roi * 0.7)), 
-        (int(width_roi * 0.7), height_roi),
-        (width_roi, height_roi)],
-        dtype=np.int32)
+        [width_roi, height_roi],
+        [int(width_roi * 0.7), int(height_roi * 0.7)],
+        [int(width_roi * 0.7), height_roi],
+        [width_roi, height_roi]
+    ], dtype=np.int32)
 
     # Visualize ROI polygons on a copy of the original edges image for debugging
     roi_debug_image = cv2.cvtColor(mask_edges, cv2.COLOR_GRAY2BGR)  # Convert to BGR for coloring
