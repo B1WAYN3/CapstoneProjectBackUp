@@ -182,8 +182,8 @@ for i in times2Run:
                 cv2.line(hough_debug_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
                 #print(f"Accepted Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
             else:
+                print("__")
                 #print(f"Rejected Line: ({x1},{y1}) -> ({x2},{y2}) with angle {angle:.2f} degrees")
-
         print(f"Total detected lines: {len(lines)}, Filtered lines: {len(filtered_lines)}")
     else:
         hough_debug_img = None
