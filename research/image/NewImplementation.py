@@ -107,7 +107,7 @@ for i in times2Run:
     median_brightness_center = np.median(center_rect[:, :, 2])
     if median_brightness_center > 65:  # Threshold for excessive brightness
         print("Excessive brightness/object detected in the center, adjusting mask...")
-        img_hsv[:, int(img_hsv.shape[1] * 0.35):int(img_hsv.shape[1] * 0.71), 2] = 0
+        img_hsv[:, int(img_hsv.shape[1] * 0.30):int(img_hsv.shape[1] * 0.71), 2] = 0
 
     print('Creating binary masks for white and yellow lanes after HSV...')
     if ifblue:
@@ -153,14 +153,14 @@ for i in times2Run:
     
 
     print('Applying morphological operations to enhance lane lines...')
-    close_kernel = np.ones((10, 20), np.uint8)
+    close_kernel = np.ones((10, 10), np.uint8)
     mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, close_kernel)
     
-    open_kernel = np.ones((5, 10), np.uint8)
+    open_kernel = np.ones((5, 5), np.uint8)
     mask_opened = cv2.morphologyEx(mask_closed, cv2.MORPH_OPEN, open_kernel)
 
     # Optional: Dilation step to thicken the lines further
-    dilate_kernel = np.ones((5, 10), np.uint8)  # Kernel for dilation to thicken the lines
+    dilate_kernel = np.ones((5, 5), np.uint8)  # Kernel for dilation to thicken the lines
     mask = cv2.morphologyEx(mask_opened, cv2.MORPH_DILATE, dilate_kernel)
 
     print("Saving Mask after Morphological Operations")
@@ -170,8 +170,12 @@ for i in times2Run:
     mask_blurred = cv2.GaussianBlur(mask, (5, 5), 0)
 
     print('Applying Canny filter...')
-    mask_edges = cv2.Canny(mask_blurred, 50, 150)
+    mask_edges = cv2.Canny(mask_blurred, 50, 150) 
     cv2.imwrite(os.path.join(path, f"mask_edges_canny_filter_{getTime()}.jpg"), mask_edges)
+    print("Bitwising mask and mask_edges.")
+    mask_edges = cv2.bitwise_or(mask, mask_edges)
+    cv2.imwrite(os.path.join(path,f"mask_edges_bitwise_{getTime()}.jpg"), mask_edges)
+    
 
     crop_width = 20
     mask_edges = mask_edges[:, crop_width:]
