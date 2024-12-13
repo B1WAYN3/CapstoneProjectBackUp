@@ -97,16 +97,18 @@ for i in times2Run:
     img_bottom_half_bgr = img_rgb[crop_height:,:]
 
     print('Performing HSV color space transformation...')
-    img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_BGR2HSV)
+    img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_RGB2HSV)
     img_crop_hsv = img_hsv
 
     print('Creating binary masks for white and yellow lanes after HSV...')
     if ifblue:
         # Existing blue lane detection
+        print("Blue HSV thresholds set, calculating mask based on blue HSV bounds.")
         lower_hsv = np.array([100, 150, 50])
         upper_hsv = np.array([130, 255, 255])
         mask = cv2.inRange(img_crop_hsv, lower_hsv, upper_hsv)
     else:
+        print("White and Yello HSV thresholds set, calculating mask based on white and yellow HSV bounds.")
         #Dynamically calculate white threshold values for different brightness. 
         median_brightness = np.median(img_hsv[:, :, 2])
 
