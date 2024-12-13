@@ -174,19 +174,19 @@ for i in times2Run:
     # Define polygons more narrowly focused on expected lane areas, avoiding the center
     height_roi, width_roi = mask_edges.shape
 
-    # Adjusted ROI polygons to be more rectangular
+    # Adjusted ROI polygons to be more rectangular and cover full height
     left_polygon = np.array([
-    [0, height_roi],
-    [int(width_roi * 0.3), int(height_roi * 0.7)],
-    [int(width_roi * 0.3), height_roi],
-    [0, height_roi]
+        [0, 0],  # Top-left corner
+        [int(width_roi * 0.33), 0],  # Top-inner corner (1/3 width from the left)
+        [int(width_roi * 0.33), height_roi],  # Bottom-inner corner
+        [0, height_roi]  # Bottom-left corner
     ], dtype=np.int32)
 
     right_polygon = np.array([
-        [width_roi, height_roi],
-        [int(width_roi * 0.7), int(height_roi * 0.7)],
-        [int(width_roi * 0.7), height_roi],
-        [width_roi, height_roi]
+        [width_roi, 0],  # Top-right corner
+        [int(width_roi * 0.67), 0],  # Top-inner corner (1/3 width from the right)
+        [int(width_roi * 0.67), height_roi],  # Bottom-inner corner
+        [width_roi, height_roi]  # Bottom-right corner
     ], dtype=np.int32)
 
     # Visualize ROI polygons on a copy of the original edges image for debugging
