@@ -63,7 +63,7 @@ for i in times2Run:
         successfulRead, raw_image = camera.read()
         print("Live Image Taken.")
         if not successfulRead:
-            print("Image not taken successfully.")
+            print("Live Image not taken successfully.")
             break
     else:
         # Load image from file instead of capturing from camera
@@ -91,13 +91,13 @@ for i in times2Run:
     img_rgb = cv2.cvtColor(raw_image, cv2.COLOR_BGR2RGB)
 
     print('Cropping top portion of the image...')
-    img_bottom_half_bgr = raw_image[crop_height:,:]
+    img_bottom_half_bgr = img_rgb[crop_height:,:]
 
     print('Performing HSV color space transformation...')
     img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_BGR2HSV)
     img_crop_hsv = img_hsv
 
-    print('Creating binary masks for white and yellow lanes...')
+    print('Creating binary masks for white and yellow lanes after HSV...')
     if ifblue:
         # Existing blue lane detection
         lower_hsv = np.array([100, 150, 50])
