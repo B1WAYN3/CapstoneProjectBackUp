@@ -100,14 +100,14 @@ for i in times2Run:
     img_hsv = cv2.cvtColor(img_bottom_half_bgr, cv2.COLOR_RGB2HSV)
     img_crop_hsv = img_hsv
 
-    center_rect_width_start = int(img_hsv.shape[1] * 0.30)
-    center_rect_width_end = int(img_hsv.shape[1] * 0.73)
-    center_rect = img_hsv[int(img_hsv.shape[0] * 0.30):int(img_hsv.shape[0] * 0.73), center_rect_width_start:center_rect_width_end]
+    center_rect_width_start = int(img_hsv.shape[1] * 0.35)
+    center_rect_width_end = int(img_hsv.shape[1] * 0.71)
+    center_rect = img_hsv[int(img_hsv.shape[0] * 0.35):int(img_hsv.shape[0] * 0.71), center_rect_width_start:center_rect_width_end]
 
     median_brightness_center = np.median(center_rect[:, :, 2])
     if median_brightness_center > 65:  # Threshold for excessive brightness
         print("Excessive brightness/object detected in the center, adjusting mask...")
-        img_hsv[:, int(img_hsv.shape[1] * 0.3):int(img_hsv.shape[1] * 0.73), 2] = 0
+        img_hsv[:, int(img_hsv.shape[1] * 0.35):int(img_hsv.shape[1] * 0.71), 2] = 0
 
     print('Creating binary masks for white and yellow lanes after HSV...')
     if ifblue:
