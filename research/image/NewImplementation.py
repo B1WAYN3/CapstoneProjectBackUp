@@ -102,7 +102,7 @@ for i in times2Run:
 
     center_rect = img_hsv[int(img_hsv.shape[0] * 0.4):int(img_hsv.shape[0] * 0.6), int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6)]
     median_brightness_center = np.median(center_rect[:, :, 2])
-    if median_brightness_center > 200:  # Threshold for excessive brightness
+    if median_brightness_center > 100:  # Threshold for excessive brightness
         print("Excessive brightness detected in the center, adjusting mask...")
         img_hsv[:, int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6), 2] = 0
 
