@@ -107,7 +107,7 @@ for i in times2Run:
     median_brightness_center = np.median(center_rect[:, :, 2])
     if median_brightness_center > 65:  # Threshold for excessive brightness
         print("Excessive brightness/object detected in the center, adjusting mask...")
-        img_hsv[:, int(img_hsv.shape[1] * 0.4):int(img_hsv.shape[1] * 0.6), 2] = 0
+        img_hsv[:, int(img_hsv.shape[1] * 0.3):int(img_hsv.shape[1] * 0.80), 2] = 0
 
     print('Creating binary masks for white and yellow lanes after HSV...')
     if ifblue:
