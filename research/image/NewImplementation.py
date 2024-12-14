@@ -289,8 +289,8 @@ for i in times2Run:
         segments.append((start, prev))
         print(f"Final segment appended: ({start}, {prev})")
 
-        num_patches_horizontal = 6
-        num_patches_vertical = 4 
+        num_patches_horizontal = 20
+        num_patches_vertical = 10 
         patch_height = (SCREEN_HEIGHT - crop_height) // num_patches_vertical
         print(f'Patch Height: {patch_height}')
         patch_width = adjusted_screen_width // num_patches_horizontal
@@ -321,8 +321,8 @@ for i in times2Run:
 
     print("Saving Image With Lines (Dynamic Patches).")
     if lines is not None:
-        cv2.imwrite(os.path.join(path, f"image_lines_bottom_half_raw{getTime()}.jpg"), img_bottom_half_bgr)
-        cv2.imwrite(os.path.join(path, f"image_lines_masked_edges{getTime()}.jpg"), hough_debug_img)
+        cv2.imwrite(os.path.join(path, f"image_lines_bottom_half_raw_{getTime()}.jpg"), img_bottom_half_bgr)
+        cv2.imwrite(os.path.join(path, f"image_lines_masked_edges_{getTime()}.jpg"), hough_debug_img)
 
     if lines is None:
         print("No Lines Detected in Path Seciton. Exiting Loop")
