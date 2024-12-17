@@ -12,14 +12,23 @@ SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
 past_steering_angle = 0
 row_threshold = 0
-path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data"
-image_import_path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data/raw_imports"
+# path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data" # Directory for pi
+path = "C:/Users/Wayne/OneDrive/Desktop/FALL_2024/Classes/Capstone Project/CapstoneProjectBackUp/research/image/Data"
+ # Directory for local machine. 
+# image_import_path = "/home/pi/repo2/CapstoneProjectBackUp/research/image/Data/raw_imports" # Directory for Pi 
+image_import_path = "C:/Users/Wayne/OneDrive/Desktop/FALL_2024/Classes/Capstone Project/CapstoneProjectBackUp/research/image/Data/raw_imports"  # Directory for local machine
 crop_height = int(SCREEN_HEIGHT * 0.10)  # This will be 48 pixels
 ifblue = False
 # Set a threshold at 5% of the observed peak for a clear yellow presence
 yellow_threshold = 500 * 0.05  # Adjust based on actual peak observations
 
-use_live_camera = True  # Set this to False to load image from file
+# Hough Transform Threshold Values to reduce noise and Fragmentation: 
+minLineLength = 30  # Increased to detect longer lines
+maxLineGap = 40     # Reduced to avoid connecting distant segments
+angle_threshold = 30  # Narrower angle range to focus on nearly vertical lines
+min_threshold = 30   # Increased to require stronger edges for line detection
+
+use_live_camera = False  # Set this to False to load image from file
 print(f"Use_live_camera set too: {use_live_camera}")
 image_center = SCREEN_WIDTH // 2  # Initialize image_center based on SCREEN_WIDTH
 
@@ -70,7 +79,8 @@ for i in times2Run:
             break
     else:
         # Load image from file instead of capturing from camera
-        image_file = os.path.join(image_import_path, "raw_image_S_02_M_53.jpg")
+        #image_file = os.path.join(image_import_path, "raw_image_S_02_M_53.jpg")
+        image_file = os.path.join(image_import_path, "test.jpg")
         if not os.path.exists(image_file):
             print(f"Image file {image_file} does not exist.")
             break
@@ -153,17 +163,32 @@ for i in times2Run:
     
 
     print('Applying morphological operations to enhance lane lines...')
-    close_kernel = np.ones((10, 10), np.uint8)
-    mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, close_kernel)
     
+    # Step 1: Dilation to close small gaps
+    dilate_kernel_1 = np.ones((7, 7), np.uint8)  # Slightly larger kernel for initial dilation
+    mask_dilated_1 = cv2.dilate(mask, dilate_kernel_1, iterations=1)
+    cv2.imwrite(os.path.join(path, f"mask_dilated_1_{getTime()}.jpg"), mask_dilated_1)
+    print("Saved mask after initial dilation to close small gaps.")
+    
+    # Step 2: Closing operation to fill gaps in detected lanes
+    close_kernel = np.ones((15, 15), np.uint8)  # Increased kernel size for closing
+    mask_closed = cv2.morphologyEx(mask_dilated_1, cv2.MORPH_CLOSE, close_kernel)
+    cv2.imwrite(os.path.join(path, f"mask_closed_{getTime()}.jpg"), mask_closed)
+    print("Saved mask after closing operation to fill gaps.")
+
+    # Step 3: Opening operation to remove small noise
     open_kernel = np.ones((5, 5), np.uint8)
     mask_opened = cv2.morphologyEx(mask_closed, cv2.MORPH_OPEN, open_kernel)
+    cv2.imwrite(os.path.join(path, f"mask_opened_{getTime()}.jpg"), mask_opened)
+    print("Saved mask after opening operation to remove small noise.")
 
-    # Optional: Dilation step to thicken the lines further
-    dilate_kernel = np.ones((5, 5), np.uint8)  # Kernel for dilation to thicken the lines
-    mask = cv2.morphologyEx(mask_opened, cv2.MORPH_DILATE, dilate_kernel)
-
-    print("Saving Mask after Morphological Operations")
+    # Step 4: Second dilation to thicken the lines further
+    dilate_kernel_2 = np.ones((5, 5), np.uint8)
+    mask = cv2.dilate(mask_opened, dilate_kernel_2, iterations=1)
+    cv2.imwrite(os.path.join(path, f"mask_dilated_2_{getTime()}.jpg"), mask)
+    print("Saved mask after second dilation to thicken lines.")
+    
+    print("Saving final mask after morphological operations.")
     cv2.imwrite(os.path.join(path, f"mask_morphological_{getTime()}.jpg"), mask)
 
     print('Applying Gaussian blur on mask...')
@@ -175,6 +200,11 @@ for i in times2Run:
     print("Bitwising mask and mask_edges.")
     mask_edges = cv2.bitwise_or(mask, mask_edges)
     cv2.imwrite(os.path.join(path,f"mask_edges_bitwise_{getTime()}.jpg"), mask_edges)
+    
+    # Apply Gaussian Blur to smooth edges before Hough Transform
+    print('Applying Gaussian blur to mask_edges to improve Hough Transform results...')
+    mask_edges = cv2.GaussianBlur(mask_edges, (5, 5), 0)
+    cv2.imwrite(os.path.join(path, f"mask_blurred_second_{getTime()}.jpg"), mask_edges)
     
 
     crop_width = 20
@@ -223,12 +253,6 @@ for i in times2Run:
     print("Applied ROI mask to edges and saved result.")
     cv2.imwrite(os.path.join(path, f"mask_edges_roi_after_{getTime()}.jpg"), mask_edges)
 
-    # Update Hough Transform parameters
-    minLineLength = 40  # Reduced from 60 to capture shorter lines
-    maxLineGap = 30     # Increased from 25 to allow more gap between segments
-    angle_threshold = 45  # Widened from 25 degrees to allow more slanted lines
-    min_threshold = 30
-
     # Hough Transform application with new parameters
     print('Applying Probabilistic Hough Transform with adjusted parameters...')
     lines = cv2.HoughLinesP(mask_edges, 1, np.pi/180, min_threshold, minLineLength, maxLineGap)
@@ -256,10 +280,10 @@ for i in times2Run:
     cv2.imwrite(os.path.join(path, f"img_bottom_half_bgr_{getTime()}.jpg"), img_bottom_half_bgr)
     cv2.imwrite(os.path.join(path, f"img_crop_hsv_{getTime()}.jpg"), img_crop_hsv)
     cv2.imwrite(os.path.join(path, f"mask_blurred_{getTime()}.jpg"), mask_blurred)
-    cv2.imwrite(os.path.join(path, f"mask_edges_final_{getTime()}.jpg"), mask_edges)
+    cv2.imwrite(os.path.join(path, f"mask_edges_after_all_filters_{getTime()}.jpg"), mask_edges)
     if lines is not None:
         print("Hough Transform successful, saving hough transform image.")
-        cv2.imwrite(os.path.join(path, f"hough_lines_after_saving_{getTime()}.jpg"), hough_debug_img)
+        cv2.imwrite(os.path.join(path, f"hough_lines_output_{getTime()}.jpg"), hough_debug_img)
 
     # Lower threshold more to get patches
     threshold = 12
