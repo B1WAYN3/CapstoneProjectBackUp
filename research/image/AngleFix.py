@@ -47,7 +47,7 @@ camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'YUYV'))  # Set YUYV for
 def getTime():
     return datetime.datetime.now().strftime("S_%S_M_%M")
 
-def stabilize_steering_angle(curr_steering_angle, last_steering_angle=None, alpha=0.2):
+def stabilize_steering_angle(curr_steering_angle, last_steering_angle=None, alpha=0.5):
     if last_steering_angle is None:
         return int(curr_steering_angle)
     else:
@@ -712,7 +712,7 @@ for i in times2Run:
             mid_star=159
             print("No lanes detected in midstar process. Using default mid_star: 159")
 
-        smoothed_mid_star = smooth_mid_star(mid_star, previous_mid_star, alpha=0.2)
+        smoothed_mid_star = smooth_mid_star(mid_star, previous_mid_star, alpha=0.00000001)
         previous_mid_star = smoothed_mid_star
         
         # -------------- STATE: SERVO ANGLE TRANSLATION --------------
@@ -720,12 +720,12 @@ for i in times2Run:
         dx = smoothed_mid_star  - 160  # Offset from center (160)
         half_width = 160              # half the 320-wide region
         # servo_angle = 100 - (dx * (80 / 160.0))
-        servo_angle_raw = 90 - (dx / half_width) * 45  # Range ~ [0..180]
+        servo_angle_raw = 180 - (smoothed_mid_star * (180.0 / 320.0))  # Range ~ [0..180]
         servo_angle = np.clip(servo_angle_raw , 0, 180)
         print(f"Calculated servo angle before stabilization: {servo_angle}")
 
         print(f"Past Steering angle:{past_steering_angle}")
-        stable_servo_angle = stabilize_steering_angle(servo_angle_raw, past_steering_angle, alpha=0.2)
+        stable_servo_angle = stabilize_steering_angle(servo_angle_raw, past_steering_angle, alpha=27)
         past_steering_angle = stable_servo_angle
         print(f"mid_star={smoothed_mid_star:.1f}, servo_angle_raw={servo_angle_raw:.1f}, stable_servo_angle={stable_servo_angle}")
 
